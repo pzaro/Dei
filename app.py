@@ -183,3 +183,13 @@ if uploaded_file is not None:
                 
         except Exception as e:
             st.error(f"Προέκυψε σφάλμα κατά την επεξεργασία: {e}")
+            st.markdown("---") # Προσθέτει μια διαχωριστική γραμμή
+st.markdown("""
+<div style='text-align: center; color: #888; padding-top: 20px;'>
+    <p style='font-size: 1.1em;'><i>Μια προσφορά της <b>Zarkolia Health</b></i></p>
+    <p>
+        <b>Πάνος Ζαρογουλίδης</b><br>
+        <span style='font-size: 0.9em;'>Φαρμακοποιός MSc, MBA, Διαμεσολαβητής</span>
+    </p>
+</div>
+""", unsafe_allow_html=True)
