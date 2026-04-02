@@ -28,9 +28,8 @@ def parse_dei_pdf(file_bytes):
     if match_energy:
         energy_charge = float(match_energy.group(1).replace(',', '.'))
 
-    # 3. Τιμολογημένες Μονάδες (Η ΔΙΟΡΘΩΣΗ)
+    # 3. Τιμολογημένες Μονάδες (Μόνο από την περιοχή της προμήθειας)
     billed_kwh = 0
-    # Απομονώνουμε μόνο το κομμάτι "Χρεώσεις Προμήθειας" για να μην διαβάσει τις Ρυθμιζόμενες
     supply_section = re.search(r'Αναλυτικά οι χρεώσεις(.*?)Ρυθμιζόμενες Χρεώσεις', processed_text, re.IGNORECASE | re.DOTALL)
     
     if supply_section:
@@ -40,9 +39,9 @@ def parse_dei_pdf(file_bytes):
         for match in matches:
             billed_kwh += float(match.group(1))
             
-    # Δίχτυ Ασφαλείας: Αν το PDF έχει καταστρέψει εντελώς το κείμενο, βρίσκουμε τις kWh μαθηματικά
+    # Δίχτυ Ασφαλείας
     if billed_kwh == 0 and energy_charge is not None and energy_charge > 0:
-        billed_kwh = round(energy_charge / 0.135) # Προσεγγιστική διαίρεση με μέση τιμή ρεύματος
+        billed_kwh = round(energy_charge / 0.135)
 
     # 4. Συνολικό Ποσό
     total_bill = None
@@ -83,19 +82,35 @@ if uploaded_file is not None:
                     else:
                         ratio = 0.18
                         
-                    total_saved = energy_saved * (1 + ratio)
+                    taxes_saved = total_saved - energy_saved if 'total_saved' in locals() else energy_saved * ratio
+                    total_saved = energy_saved + taxes_saved
 
-                    st.success(f"🎉 Το συνολικό σας όφελος είναι **{total_saved:.2f} €**")
+                    st.success(f"🎉 Το συνολικό σας όφελος σε αυτόν τον λογαριασμό είναι **{total_saved:.2f} €**")
                     
+                    # Εμφάνιση των 3 βασικών μετρήσεων
                     col1, col2, col3 = st.columns(3)
                     col1.metric(label="Συμψηφισμένες kWh", value=f"{hidden_kwh:.1f}")
                     col2.metric(label="Κέρδος Ενέργειας", value=f"{energy_saved:.2f} €")
-                    col3.metric(label="Κέρδος Φόρων/Τελών", value=f"{(total_saved - energy_saved):.2f} €")
+                    col3.metric(label="Κέρδος Φόρων/Τελών", value=f"{taxes_saved:.2f} €")
                     
                     st.divider()
-                    st.info(f"💡 Χωρίς το Φ/Β, ο τελικός λογαριασμός θα ήταν περίπου **{(safe_total_bill + total_saved):.2f} €**.")
+
+                    # --- ΑΝΑΛΥΤΙΚΗ ΕΠΕΞΗΓΗΣΗ ΣΕ ΑΠΛΑ ΕΛΛΗΝΙΚΑ ---
+                    st.markdown("### 📖 Πώς ακριβώς προκύπτει αυτό το κέρδος;")
                     
-                    with st.expander("🔍 Προβολή δεδομένων PDF (Debug)"):
+                    st.markdown(f"""
+                    **1. Ενέργεια που παράξατε και "γλιτώσατε" (Συμψηφισμένες kWh):** Ο μετρητής σας στο ρολόι κατέγραψε συνολικά **{total_kwh} kWh**, αλλά η ΔΕΗ σας τιμολόγησε μόνο για τις **{billed_kwh} kWh**. 
+                    Αυτό σημαίνει ότι το φωτοβολταϊκό σας "απορρόφησε" **{hidden_kwh:.1f} kWh**, τις οποίες χρησιμοποιήσατε εντελώς δωρεάν!
+                    
+                    **2. Κέρδος από την καθαρή ενέργεια:** Αν πληρώνατε αυτές τις {hidden_kwh:.1f} kWh με τη μέση τιμή ρεύματος αυτού του λογαριασμού (που ήταν περίπου *{avg_rate:.3f} € ανά kWh*), θα σας κόστιζαν **{energy_saved:.2f} €**. Αυτά τα χρήματα έμειναν στην τσέπη σας.
+                    
+                    **3. Κέρδος από Φόρους και Ρυθμιζόμενες Χρεώσεις:** Επειδή δεν χρεωθήκατε αυτές τις {hidden_kwh:.1f} kWh, αυτόματα γλιτώσατε και τις αναλογικές χρεώσεις που τις συνοδεύουν (Χρήση Δικτύων, ΕΤΜΕΑΡ, ΦΠΑ, κλπ). Αυτό σας έδωσε ένα επιπλέον όφελος **{taxes_saved:.2f} €**.
+                    """)
+                    
+                    st.info(f"💡 **Συμπέρασμα:** Αν δεν είχατε το φωτοβολταϊκό, ο λογαριασμός σας δεν θα ήταν **{safe_total_bill:.2f} €**, αλλά θα έφτανε περίπου τα **{(safe_total_bill + total_saved):.2f} €**!")
+
+                    # Κουμπί για debug δεδομένων
+                    with st.expander("🔍 Προβολή πρωτογενών δεδομένων του λογαριασμού"):
                         st.write(f"- **Σύνολο Μετρητή:** {total_kwh} kWh")
                         st.write(f"- **Τιμολογήθηκαν (Χρεώθηκαν):** {billed_kwh} kWh")
                         st.write(f"- **Χρέωση Ενέργειας:** {energy_charge} €")
