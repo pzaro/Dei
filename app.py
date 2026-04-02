@@ -14,7 +14,6 @@ def parse_dei_pdf(file_bytes):
     for page in doc:
         text += page.get_text("text") + "\n"
     
-    # Διόρθωση OCR
     processed_text = text.replace("Bkwh", "8kWh").replace("B kwh", "8 kWh").replace("awn", "kWh")
 
     # 1. Σύνολο Μετρητή
@@ -23,7 +22,7 @@ def parse_dei_pdf(file_bytes):
     if match_total:
         total_kwh = float(match_total.group(1) or match_total.group(2))
 
-    # 2. Τιμολογημένες Μονάδες ΚΑΙ Ακριβής Τιμή (Από τις παρενθέσεις)
+    # 2. Τιμολογημένες Μονάδες ΚΑΙ Ακριβής Τιμή
     billed_kwh = 0
     total_tier_cost = 0.0
     exact_avg_rate = None
@@ -62,7 +61,7 @@ def parse_dei_pdf(file_bytes):
 
     return total_kwh, billed_kwh, energy_charge, total_bill, exact_avg_rate
 
-# --- UI ---
+# --- UI & ΛΟΓΙΚΗ ---
 uploaded_file = st.file_uploader("📄 Επιλέξτε το PDF του λογαριασμού σας", type="pdf")
 
 if uploaded_file is not None:
@@ -80,23 +79,41 @@ if uploaded_file is not None:
                 else:
                     safe_energy_charge = energy_charge if energy_charge is not None else 0.0
                     safe_total_bill = total_bill if total_bill is not None else 0.0
-                    
                     avg_rate_no_vat = exact_avg_rate if exact_avg_rate is not None else 0.139
                     
-                    # Υπολογισμός Κέρδους Ενέργειας
-                    energy_saved = hidden_kwh * avg_rate_no_vat
+                    # --- Ο ΠΡΑΓΜΑΤΙΚΟΣ ΑΛΓΟΡΙΘΜΟΣ ΤΙΜΟΛΟΓΗΣΗΣ ΤΗΣ ΔΕΗ ---
+                    # Σταθερές Χρεώσεις ανά kWh (βάσει των τιμολογίων ΔΕΗ/ΔΕΔΔΗΕ/ΑΔΜΗΕ)
+                    ADMHE_RATE = 0.00999
+                    DEDDHE_RATE = 0.00339
+                    YKO_RATE = 0.00690
+                    ETMEAR_RATE = 0.01700
+                    EFK_RATE = 0.00220
+                    EIDIKO_TELOS_RATE = 0.005 # 5‰
+                    VAT_RATE = 0.06 # ΦΠΑ 6%
                     
-                    # Υπολογισμός Κέρδους από Λοιπές Χρεώσεις
-                    if safe_total_bill > 0 and safe_energy_charge > 0 and safe_total_bill > safe_energy_charge:
-                        ratio = (safe_total_bill - safe_energy_charge) / safe_energy_charge
-                    else:
-                        ratio = 0.18 
-                        
-                    taxes_saved = energy_saved * ratio
-                    total_saved = energy_saved + taxes_saved
+                    total_regulated_rate = ADMHE_RATE + DEDDHE_RATE + YKO_RATE + ETMEAR_RATE
+                    
+                    # Υπολογισμός Κέρδους Ενέργειας
+                    saved_energy = hidden_kwh * avg_rate_no_vat
+                    
+                    # Υπολογισμός Κέρδους από Ρυθμιζόμενες & Φόρους
+                    saved_regulated = hidden_kwh * total_regulated_rate
+                    saved_efk = hidden_kwh * EFK_RATE
+                    
+                    subtotal_for_telos = saved_energy + saved_regulated + saved_efk
+                    saved_eidiko_telos = subtotal_for_telos * EIDIKO_TELOS_RATE
+                    
+                    subtotal_for_vat = subtotal_for_telos + saved_eidiko_telos
+                    saved_vat = subtotal_for_vat * VAT_RATE
+                    
+                    # Συνολικά γλιτωμένα τέλη & φόροι
+                    taxes_saved = saved_regulated + saved_efk + saved_eidiko_telos + saved_vat
+                    
+                    # Συνολικό Όφελος
+                    total_saved = saved_energy + taxes_saved
 
                     # --- ΔΗΜΙΟΥΡΓΙΑ ΕΙΚΟΝΙΚΩΝ (ΧΩΡΙΣ Φ/Β) ΠΟΣΩΝ ---
-                    hypo_energy_charge = safe_energy_charge + energy_saved
+                    hypo_energy_charge = safe_energy_charge + saved_energy
                     actual_other_charges = safe_total_bill - safe_energy_charge
                     hypo_other_charges = actual_other_charges + taxes_saved
                     hypo_total_bill = safe_total_bill + total_saved
@@ -107,7 +124,6 @@ if uploaded_file is not None:
                     st.markdown("### 📊 Σύγκριση Τιμολόγησης")
                     st.markdown("*Με πράσινο χρώμα βλέπετε τι τελικά πληρώσατε, ενώ με κόκκινο στην παρένθεση τι θα πληρώνατε χωρίς το Φωτοβολταϊκό.*")
 
-                    # HTML/CSS για την εμφάνιση με τα χρώματα που ζήτησες
                     comparison_html = f"""
                     <div style="background-color: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #444; margin-bottom: 25px;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 1.1em;">
@@ -148,23 +164,4 @@ if uploaded_file is not None:
                     st.markdown("### 📖 Αναλυτικό Report Κέρδους")
                     
                     st.markdown(f"""
-                    **1. Ενέργεια που παράξατε και "γλιτώσατε":** Ο μετρητής κατέγραψε συνολικά **{total_kwh} kWh**, αλλά η ΔΕΗ σας τιμολόγησε μόνο για τις **{billed_kwh} kWh**. 
-                    Άρα το φωτοβολταϊκό κάλυψε **{hidden_kwh:.1f} kWh**.
-                    
-                    **2. Ακριβής Τιμή Ρεύματος:** Σύμφωνα με την ανάλυση του λογαριασμού σας, η καθαρή τιμή ενέργειας είναι ακριβώς **{avg_rate_no_vat:.5f} €/kWh**. Μαζί με το ΦΠΑ διαμορφώνεται στα **{(avg_rate_no_vat * 1.06):.5f} €/kWh**.
-                    
-                    **3. Οικονομικό Κέρδος:** Αν αγοράζατε αυτές τις {hidden_kwh:.1f} kWh, θα πληρώνατε **{energy_saved:.2f} €** καθαρά για το ρεύμα. Επειδή όμως γλιτώσατε το ρεύμα, γλιτώσατε αυτόματα τις **Ρυθμιζόμενες χρεώσεις** (ΕΤΜΕΑΡ, Δίκτυα κλπ) και τον **ΦΠΑ** που του αναλογούν, κερδίζοντας επιπλέον **{taxes_saved:.2f} €**!
-                    """)
-                    
-                    with st.expander("🔍 Προβολή πρωτογενών δεδομένων του λογαριασμού (Debug)"):
-                        st.write(f"- **Σύνολο Μετρητή:** {total_kwh} kWh")
-                        st.write(f"- **Τιμολογήθηκαν (Χρεώθηκαν):** {billed_kwh} kWh")
-                        st.write(f"- **Ακριβής Τιμή Καθαρής Ενέργειας:** {avg_rate_no_vat:.5f} €/kWh")
-                        st.write(f"- **Καθαρή Αξία Ενέργειας:** {safe_energy_charge:.2f} €")
-                        st.write(f"- **Σύνολο Πληρωμής:** {safe_total_bill:.2f} €")
-                        
-            else:
-                st.error("❌ Δεν μπορέσαμε να διαβάσουμε την πλήρη κατανάλωση. Βεβαιωθείτε ότι είναι Εκκαθαριστικός.")
-        
-        except Exception as e:
-            st.error(f"Σφάλμα ανάγνωσης: {e}")
+                    **1. Ενέργεια που παράξατε και "γλιτώσατε":** Ο μετρητής κατέγραψε συνολικά **{total_kwh} kWh**, αλλά η ΔΕΗ σας τιμολόγησε μόνο για τις **{billed_
