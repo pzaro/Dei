@@ -32,7 +32,6 @@ def parse_dei_pdf(file_bytes):
     
     if supply_section:
         section_text = supply_section.group(1)
-        # Βρίσκει τα κλιμάκια π.χ. (71kWhx0,12905)
         pattern_billed = r'(\d+)\s*[a-zA-Zα-ωΑ-Ω]*\s*[x×X]\s*(\d+[.,]\d+)'
         matches = re.finditer(pattern_billed, section_text)
         
@@ -43,14 +42,12 @@ def parse_dei_pdf(file_bytes):
             billed_kwh += kwh_tier
             total_tier_cost += kwh_tier * rate_tier
             
-    # 3. Υπολογισμός της ακριβούς μέσης τιμής και της Χρέωσης Ενέργειας
+    # 3. Υπολογισμός Χρέωσης Ενέργειας
     energy_charge = None
     if billed_kwh > 0:
         exact_avg_rate = total_tier_cost / billed_kwh
-        # FIX: Βάζουμε το καθαρό μαθηματικό άθροισμα για να αποφύγουμε λάθη ανάγνωσης!
         energy_charge = round(total_tier_cost, 2) 
     else:
-        # Δίχτυ Ασφαλείας αν δεν βρεθούν τα κλιμάκια
         match_energy = re.search(r'Χρέωση\s*Ενέργειας\s*Κανονική[\s\S]{0,50}?(\d+[.,]\d+)', processed_text, re.IGNORECASE)
         if match_energy:
             energy_charge = float(match_energy.group(1).replace(',', '.'))
@@ -84,48 +81,81 @@ if uploaded_file is not None:
                     safe_energy_charge = energy_charge if energy_charge is not None else 0.0
                     safe_total_bill = total_bill if total_bill is not None else 0.0
                     
-                    # Επιλογή της τιμής ρεύματος
                     avg_rate_no_vat = exact_avg_rate if exact_avg_rate is not None else 0.139
                     
-                    # Προσθήκη ΦΠΑ 6% στην τιμή ενέργειας (για ενημέρωση χρήστη)
-                    avg_rate_with_vat = avg_rate_no_vat * 1.06
-                    
-                    # Το κέρδος ενέργειας υπολογίζεται
+                    # Υπολογισμός Κέρδους Ενέργειας
                     energy_saved = hidden_kwh * avg_rate_no_vat
                     
-                    # Υπολογισμός αναλογίας φόρων (ΦΠΑ, Δήμος, κλπ) & Ρυθμιζόμενων
+                    # Υπολογισμός Κέρδους από Λοιπές Χρεώσεις
                     if safe_total_bill > 0 and safe_energy_charge > 0 and safe_total_bill > safe_energy_charge:
                         ratio = (safe_total_bill - safe_energy_charge) / safe_energy_charge
                     else:
-                        ratio = 0.18 # Μια μέση ασφαλής αναλογία αν λείπουν δεδομένα
+                        ratio = 0.18 
                         
                     taxes_saved = energy_saved * ratio
                     total_saved = energy_saved + taxes_saved
 
-                    # --- ΑΠΟΤΕΛΕΣΜΑΤΑ ---
-                    st.success(f"🎉 Το συνολικό σας όφελος σε αυτόν τον λογαριασμό είναι **{total_saved:.2f} €**")
-                    
-                    col1, col2, col3 = st.columns(3)
-                    col1.metric(label="Συμψηφισμένες kWh", value=f"{hidden_kwh:.1f}")
-                    col2.metric(label="Κέρδος Ενέργειας", value=f"{energy_saved:.2f} €")
-                    col3.metric(label="Κέρδος Φόρων/Τελών", value=f"{taxes_saved:.2f} €")
-                    
-                    st.divider()
+                    # --- ΔΗΜΙΟΥΡΓΙΑ ΕΙΚΟΝΙΚΩΝ (ΧΩΡΙΣ Φ/Β) ΠΟΣΩΝ ---
+                    hypo_energy_charge = safe_energy_charge + energy_saved
+                    actual_other_charges = safe_total_bill - safe_energy_charge
+                    hypo_other_charges = actual_other_charges + taxes_saved
+                    hypo_total_bill = safe_total_bill + total_saved
 
-                    st.markdown("### 📖 Πώς ακριβώς προκύπτει αυτό το κέρδος;")
+                    # --- ΑΠΟΤΕΛΕΣΜΑΤΑ (ΣΥΓΚΡΙΤΙΚΟΣ ΠΙΝΑΚΑΣ) ---
+                    st.success(f"🎉 Το συνολικό σας καθαρό όφελος είναι **{total_saved:.2f} €**")
+                    
+                    st.markdown("### 📊 Σύγκριση Τιμολόγησης")
+                    st.markdown("*Με πράσινο χρώμα βλέπετε τι τελικά πληρώσατε, ενώ με κόκκινο στην παρένθεση τι θα πληρώνατε χωρίς το Φωτοβολταϊκό.*")
+
+                    # HTML/CSS για την εμφάνιση με τα χρώματα που ζήτησες
+                    comparison_html = f"""
+                    <div style="background-color: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #444; margin-bottom: 25px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 1.1em;">
+                            <tr style="border-bottom: 1px solid #444;">
+                                <td style="padding: 10px 0;">⚡ <b>Κατανάλωση (kWh)</b></td>
+                                <td style="text-align: right; padding: 10px 0;">
+                                    <span style="color: #4CAF50; font-weight: bold; font-size: 1.2em;">{billed_kwh:.1f}</span> 
+                                    <span style="color: #F44336; margin-left: 8px;">({total_kwh:.1f})</span>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #444;">
+                                <td style="padding: 10px 0;">💶 <b>Αξία Καθαρής Ενέργειας</b></td>
+                                <td style="text-align: right; padding: 10px 0;">
+                                    <span style="color: #4CAF50; font-weight: bold; font-size: 1.2em;">{safe_energy_charge:.2f} €</span> 
+                                    <span style="color: #F44336; margin-left: 8px;">({hypo_energy_charge:.2f} €)</span>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom: 2px solid #666;">
+                                <td style="padding: 10px 0;">🛡️ <b>Ρυθμιζόμενες, Φόροι & Λοιπά</b></td>
+                                <td style="text-align: right; padding: 10px 0;">
+                                    <span style="color: #4CAF50; font-weight: bold; font-size: 1.2em;">{actual_other_charges:.2f} €</span> 
+                                    <span style="color: #F44336; margin-left: 8px;">({hypo_other_charges:.2f} €)</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 15px 0; font-size: 1.2em;">💰 <b>ΣΥΝΟΛΟ ΛΟΓΑΡΙΑΣΜΟΥ</b></td>
+                                <td style="text-align: right; padding: 15px 0;">
+                                    <span style="color: #4CAF50; font-weight: bold; font-size: 1.4em;">{safe_total_bill:.2f} €</span> 
+                                    <span style="color: #F44336; font-size: 1.2em; margin-left: 8px;">({hypo_total_bill:.2f} €)</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    """
+                    st.markdown(comparison_html, unsafe_allow_html=True)
+                    
+                    # --- REPORT ΚΕΡΔΟΥΣ ---
+                    st.markdown("### 📖 Αναλυτικό Report Κέρδους")
                     
                     st.markdown(f"""
                     **1. Ενέργεια που παράξατε και "γλιτώσατε":** Ο μετρητής κατέγραψε συνολικά **{total_kwh} kWh**, αλλά η ΔΕΗ σας τιμολόγησε μόνο για τις **{billed_kwh} kWh**. 
                     Άρα το φωτοβολταϊκό κάλυψε **{hidden_kwh:.1f} kWh**.
                     
-                    **2. Ακριβής Τιμή Ρεύματος:** Σύμφωνα με την ανάλυση του λογαριασμού σας, η καθαρή τιμή ενέργειας είναι ακριβώς **{avg_rate_no_vat:.5f} €/kWh**. Μαζί με το **ΦΠΑ (6%)** διαμορφώνεται στα **{avg_rate_with_vat:.5f} €/kWh**.
+                    **2. Ακριβής Τιμή Ρεύματος:** Σύμφωνα με την ανάλυση του λογαριασμού σας, η καθαρή τιμή ενέργειας είναι ακριβώς **{avg_rate_no_vat:.5f} €/kWh**. Μαζί με το ΦΠΑ διαμορφώνεται στα **{(avg_rate_no_vat * 1.06):.5f} €/kWh**.
                     
-                    **3. Οικονομικό Κέρδος:** Αν αγοράζατε αυτές τις {hidden_kwh:.1f} kWh, θα πληρώνατε **{energy_saved:.2f} €** καθαρά για το ρεύμα. Επειδή όμως γλιτώσατε το ρεύμα, γλιτώσατε αυτόματα και το **ΦΠΑ**, τις **Ρυθμιζόμενες χρεώσεις** και τα **Δημοτικά τέλη** που του αναλογούν, κερδίζοντας επιπλέον **{taxes_saved:.2f} €**!
+                    **3. Οικονομικό Κέρδος:** Αν αγοράζατε αυτές τις {hidden_kwh:.1f} kWh, θα πληρώνατε **{energy_saved:.2f} €** καθαρά για το ρεύμα. Επειδή όμως γλιτώσατε το ρεύμα, γλιτώσατε αυτόματα τις **Ρυθμιζόμενες χρεώσεις** (ΕΤΜΕΑΡ, Δίκτυα κλπ) και τον **ΦΠΑ** που του αναλογούν, κερδίζοντας επιπλέον **{taxes_saved:.2f} €**!
                     """)
                     
-                    st.info(f"💡 **Συμπέρασμα:** Αν δεν είχατε το φωτοβολταϊκό, ο λογαριασμός δεν θα ήταν **{safe_total_bill:.2f} €**, αλλά θα έφτανε τα **{(safe_total_bill + total_saved):.2f} €**!")
-
-                    # Κρυφό μενού ελέγχου για διαφάνεια
                     with st.expander("🔍 Προβολή πρωτογενών δεδομένων του λογαριασμού (Debug)"):
                         st.write(f"- **Σύνολο Μετρητή:** {total_kwh} kWh")
                         st.write(f"- **Τιμολογήθηκαν (Χρεώθηκαν):** {billed_kwh} kWh")
