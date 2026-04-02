@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Φ/Β Κέρδος Λογαριασμού ΔΕΗ - Με Εκκαθάριση</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #f0f7f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 750px;
+            width: 100%;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px rgba(0,32,0,0.1);
+            padding: 25px 30px 35px;
+            transition: all 0.2s;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #1e4a2f;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 5px solid #2e7d32;
+            padding-left: 18px;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+        .sub {
+            color: #2c5e2e;
+            border-bottom: 1px solid #cfe9cf;
+            margin-bottom: 25px;
+            padding-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .upload-area {
+            background: #f9fff7;
+            border: 2px dashed #9bc49b;
+            border-radius: 24px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: 0.2s;
+        }
+        .upload-area.loading {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            opacity: 0.7;
+        }
+        .upload-label {
+            background: #2e7d32;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin: 10px 0 5px;
+            border: none;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .upload-label:hover {
+            background: #1b5e20;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .or-divider {
+            margin: 10px 0;
+            font-size: 0.8rem;
+            color: #5a8f5a;
+        }
+        .form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background: #fefef5;
+            padding: 20px;
+            border-radius: 24px;
+            margin: 15px 0;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: space-between;
+        }
+        .field {
+            flex: 1;
+            min-width: 160px;
+        }
+        .field label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1c441c;
+            margin-bottom: 6px;
+        }
+        .field input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 20px;
+            border: 1px solid #bfddbf;
+            background: white;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        .field input:focus {
+            outline: none;
+            border-color: #2e7d32;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        button {
+            background: #1e5a2e;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 1;
+        }
+        button:hover {
+            background: #0f3b1a;
+            transform: scale(0.98);
+        }
+        .btn-clear {
+            background: #7f8c8d;
+        }
+        .btn-clear:hover {
+            background: #5d6e6e;
+        }
+        .result-card {
+            background: #e9f3e6;
+            border-radius: 24px;
+            padding: 18px 22px;
+            margin-top: 25px;
+            border-left: 8px solid #2b7a3e;
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .profit {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1f5e2d;
+            margin: 10px 0;
+        }
+        .profit span {
+            font-size: 1rem;
+            font-weight: normal;
+        }
+        .details {
+            font-size: 0.9rem;
+            background: white;
+            padding: 14px;
+            border-radius: 18px;
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+        hr {
+            border-color: #cbe5cb;
+            margin: 15px 0;
+        }
+        .error {
+            color: #c0392b;
+            background: #ffe6e5;
+            padding: 12px;
+            border-radius: 20px;
+            margin-top: 15px;
+            border-left: 4px solid #c0392b;
+        }
+        .loading-text {
+            color: #2e7d32;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+        .footnote {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 25px;
+            color: #4a674a;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>☀️ Φ/Β Κέρδος Λογαριασμού</h1>
+    <div class="sub">Υπολογισμός απόκρυφης έκπτωσης λόγω φωτοβολταϊκών (net metering) + εκκαθάριση</div>
+
+    <div class="upload-area" id="uploadArea">
+        <label class="upload-label" for="pdfInput">📄 Ανέβασμα PDF (ΔΕΗ)</label>
+        <input type="file" id="pdfInput" accept=".pdf">
+        <div id="loadingText" class="loading-text">🔄 Επεξεργασία PDF, παρακαλώ περιμένετε...</div>
+        <div class="or-divider">— ή συμπληρώστε χειροκίνητα —</div>
+    </div>
+
+    <div class="form-grid">
+        <div class="row">
+            <div class="field">
+                <label>📊 Σύνολο μετρητή (kWh)</label>
+                <input type="number" id="totalKwh" step="1" value="205" placeholder="π.χ. 205">
+            </div>
+            <div class="field">
+                <label>🔢 kWh που χρεώθηκαν</label>
+                <input type="number" id="billedKwh" step="1" value="79" placeholder="π.χ. 79">
+            </div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <label>💰 Χρέωση Ενέργειας (€)</label>
+                <input type="number" id="energyCharge" step="any" value="10.27" placeholder="π.χ. 10.27">
+            </div>
+            <div class="field">
+                <label>🧾 Συνολικό ποσό λογαριασμού (€)</label>
+                <input type="number" id="totalBill" step="any" value="41.00" placeholder="π.χ. 41.00">
+            </div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <label>🏛️ ΦΠΑ + Δήμος + ΕΡΤ (€) – προαιρετικά</label>
+                <input type="number" id="taxesLocal" step="any" value="0" placeholder="Αν δεν γνωρίζετε, αφήστε το 0">
+                <small style="color:#517a47;">(Αν δεν συμπληρωθεί, υπολογίζεται αναλογικά)</small>
+            </div>
+        </div>
+        <div class="button-group">
+            <button id="calcBtn">📈 Υπολογισμός κέρδους</button>
+            <button id="clearBtn" class="btn-clear">🗑️ Καθαρισμός</button>
+        </div>
+    </div>
+
+    <div id="resultArea"></div>
+    
+    <div class="footnote">
+        * Η απόκρυφη έκπτωση είναι οι kWh που δεν χρεώθηκαν (σύνολο μετρητή – kWh που τιμολογήθηκαν).<br>
+        Το όφελος περιλαμβάνει ενέργεια + αναλογία ρυθμιζόμενων χρεώσεων και φόρων.
+    </div>
+</div>
+
+<script>
+    // Εξαγωγή κειμένου από PDF
+    async function extractPdfText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const typedarray = new Uint8Array(e.target.result);
+                if (typeof pdfjsLib === 'undefined') {
+                    reject("Η βιβλιοθήκη PDF.js δεν έχει φορτώσει ακόμα. Δοκιμάστε ξανά σε λίγο.");
+                    return;
+                }
+                try {
+                    const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+                    let fullText = "";
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(" ");
+                        fullText += pageText + "\n";
+                    }
+                    resolve(fullText);
+                } catch (err) {
+                    reject("Σφάλμα ανάγνωσης αρχείου PDF. Βεβαιωθείτε ότι το αρχείο δεν είναι κλειδωμένο.");
+                }
+            };
+            reader.onerror = () => reject("Αποτυχία ανάγνωσης αρχείου από τον browser.");
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // Ανάλυση κειμένου (Regex)
+    function parseDeiBillText(text) {
+        let totalKwh = null, billedKwhTotal = null, energyChargeEuro = null, totalBillEuro = null;
+
+        const consumptionMatch = text.match(/ΚΑΤΑΝΑΛΩΣΗ\s*\.*:\s*(\d+)/i) || 
+                                 text.match(/Σύνολο\s*Κατανάλωσης\s*(\d+)/i) || 
+                                 text.match(/(\d+)\s*kWh/i);
+        if (consumptionMatch) totalKwh = parseFloat(consumptionMatch[1]);
+
+        let regexClusters = /(\d+)\s*kWh\s*[x×]\s*(\d+[.,]\d+)/gi;
+        let matches = [...text.matchAll(regexClusters)];
+        let sumBilledKwh = 0;
+        for (let m of matches) {
+            let kwh = parseFloat(m[1]);
+            if (!isNaN(kwh)) sumBilledKwh += kwh;
+        }
+        if (sumBilledKwh > 0) billedKwhTotal = sumBilledKwh;
+
+        const energyMatch = text.match(/Χρέωση\s*Ενέργειας\s*Κανονική\s*(\d+[.,]\d+)/i);
+        if (energyMatch) energyChargeEuro = parseFloat(energyMatch[1].replace(',', '.'));
+
+        let totalMatch = text.match(/\*(\d+[.,]\d+)\s*€/) || 
+                         text.match(/Συνολικό\s*ποσό\s*πληρωμής\s*[:\-]?\s*(\d+[.,]\d+)/i);
+        if (totalMatch) totalBillEuro = parseFloat(totalMatch[1].replace(',', '.'));
+
+        return { totalKwh, billedKwhTotal, energyChargeEuro, totalBillEuro };
+    }
+
+    // Υπολογισμός Κέρδους
+    function computeProfit(totalKwh, billedKwh, energyCharge, totalBill, fixedTaxes = 0) {
+        if (!totalKwh || !billedKwh || totalKwh <= billedKwh) {
+            return { error: "Οι kWh που χρεώθηκαν είναι μεγαλύτερες ή ίσες με το σύνολο του μετρητή. Δεν υπάρχει έκπτωση από Φ/Β (ή λάθος δεδομένα)." };
+        }
+        
+        const hiddenKwh = totalKwh - billedKwh;
+        if (hiddenKwh <= 0) return { error: "Καμία κρυφή kWh – πιθανότατα το φωτοβολταϊκό δεν απέδωσε ή δεν συμψηφίζεται σε αυτόν τον λογαριασμό." };
+
+        let avgRate = (energyCharge && billedKwh > 0) ? (energyCharge / billedKwh) : 0.13;
+        const energySaved = hiddenKwh * avgRate;
+
+        let otherChargesRatio = 0;
+        // Αν ο χρήστης έδωσε συγκεκριμένους φόρους, τους υπολογίζουμε ως ποσοστό της χρέωσης ενέργειας
+        if (fixedTaxes > 0 && energyCharge > 0) {
+            otherChargesRatio = fixedTaxes / energyCharge;
+        } 
+        // Αλλιώς, αν έχουμε σύνολο λογαριασμού, υπολογίζουμε το ποσοστό των υπόλοιπων χρεώσεων
+        else if (totalBill && energyCharge && totalBill > energyCharge) {
+            otherChargesRatio = (totalBill - energyCharge) / energyCharge;
+        } 
+        // Προεπιλογή αν λείπουν δεδομένα
+        else {
+            otherChargesRatio = 0.18; 
+        }
+
+        const totalSaved = energySaved * (1 + otherChargesRatio);
+
+        return {
+            hiddenKwh: hiddenKwh.toFixed(1),
+            avgRate: avgRate.toFixed(4),
+            energySaved: energySaved.toFixed(2),
+            otherRatio: (otherChargesRatio * 100).toFixed(1),
+            totalSaved: totalSaved.toFixed(2),
+            totalBillActual: totalBill ? totalBill.toFixed(2) : 'Άγνωστο',
+            hypotheticalBill: totalBill ? (parseFloat(totalBill) + totalSaved).toFixed(2) : 'Άγνωστο'
+        };
+    }
+
+    // Εμφάνιση αποτελέσματος
+    function displayResult(profitData) {
+        const resultDiv = document.getElementById('resultArea');
+        if (profitData.error) {
+            resultDiv.innerHTML = `<div class="error">⚠️ ${profitData.error}</div>`;
+            return;
+        }
+        resultDiv.innerHTML = `
+            <div class="result-card">
+                <strong>☀️ ΟΦΕΛΟΣ ΑΠΟ ΦΩΤΟΒΟΛΤΑΪΚΑ ΣΕ ΑΥΤΟΝ ΤΟΝ ΛΟΓΑΡΙΑΣΜΟ</strong>
+                <div class="profit">${profitData.totalSaved} € <span>συνολικό κέρδος</span></div>
+                <div class="details">
+                    📉 <strong>Κρυφή έκπτωση (kWh που δεν χρεώθηκαν):</strong> ${profitData.hiddenKwh} kWh<br>
+                    ⚡ <strong>Μέση τιμή ενέργειας:</strong> ${profitData.avgRate} €/kWh<br>
+                    💶 <strong>Κέρδος μόνο στην ενέργεια:</strong> ${profitData.energySaved} €<br>
+                    🧾 <strong>Προσαύξηση (Λοιπές χρεώσεις & Φόροι):</strong> +${profitData.otherRatio}% <br>
+                    🧮 <strong>Σύνολο λογαριασμού που πληρώσατε:</strong> ${profitData.totalBillActual} €<br>
+                    🔮 <strong>Θα πληρώνατε χωρίς Φ/Β:</strong> ~${profitData.hypotheticalBill} €<br>
+                    <hr>
+                    ✅ <strong>Καθαρό όφελος από Φ/Β = ${profitData.totalSaved} €</strong>
+                </div>
+            </div>
+        `;
+    }
+
+    // Καθαρισμός Πεδίων
+    function clearAll() {
+        document.querySelectorAll('.form-grid input').forEach(input => {
+            input.value = input.id === 'taxesLocal' ? '0' : '';
+        });
+        document.getElementById('resultArea').innerHTML = '';
+        document.getElementById('pdfInput').value = '';
+    }
+
+    // Επεξεργασία PDF
+    async function processPdfAndCalc(file) {
+        const uploadArea = document.getElementById('uploadArea');
+        const loadingText = document.getElementById('loadingText');
+        const resultArea = document.getElementById('resultArea');
+        
+        try {
+            // UI Loading State
+            uploadArea.classList.add('loading');
+            loadingText.style.display = 'block';
+            resultArea.innerHTML = '';
+
+            const text = await extractPdfText(file);
+            const { totalKwh, billedKwhTotal, energyChargeEuro, totalBillEuro } = parseDeiBillText(text);
+            
+            if (!totalKwh) throw new Error("Δεν βρέθηκαν δεδομένα συνολικής κατανάλωσης (kWh) στο PDF.");
+            
+            let billedKwh = billedKwhTotal;
+            if (!billedKwh && energyChargeEuro && totalKwh) {
+                let fallbackRate = 0.129;
+                let approxBilled = Math.round(energyChargeEuro / fallbackRate);
+                billedKwh = (approxBilled > 0 && approxBilled <= totalKwh) ? approxBilled : totalKwh * 0.4;
+            }
+            if (!billedKwh || billedKwh <= 0) billedKwh = totalKwh * 0.35;
+
+            // Ενημέρωση UI με τις τιμές του PDF
+            document.getElementById('totalKwh').value = totalKwh || '';
+            document.getElementById('billedKwh').value = billedKwh || '';
+            document.getElementById('energyCharge').value = energyChargeEuro ? energyChargeEuro.toFixed(2) : '';
+            document.getElementById('totalBill').value = totalBillEuro ? totalBillEuro.toFixed(2) : '';
+            document.getElementById('taxesLocal').value = '0'; // Μηδενισμός φόρων κατά το νέο ανέβασμα
+
+            const profit = computeProfit(totalKwh, billedKwh, energyChargeEuro, totalBillEuro, 0);
+            displayResult(profit);
+
+        } catch (err) {
+            resultArea.innerHTML = `<div class="error">❌ ${err.message || err}</div>`;
+        } finally {
+            // Επαναφορά UI
+            uploadArea.classList.remove('loading');
+            loadingText.style.display = 'none';
+        }
+    }
+
+    // Events
+    document.getElementById('calcBtn').addEventListener('click', () => {
+        const totalKwh = parseFloat(document.getElementById('totalKwh').value);
+        const billedKwh = parseFloat(document.getElementById('billedKwh').value);
+        const energyCharge = parseFloat(document.getElementById('energyCharge').value);
+        const totalBill = parseFloat(document.getElementById('totalBill').value);
+        const taxesLocal = parseFloat(document.getElementById('taxesLocal').value) || 0; // Τώρα λειτουργεί σωστά!
+
+        if (isNaN(totalKwh) || isNaN(billedKwh) || isNaN(energyCharge) || isNaN(totalBill)) {
+            document.getElementById('resultArea').innerHTML = `<div class="error">Παρακαλώ συμπληρώστε έγκυρα νούμερα στα 4 πρώτα πεδία.</div>`;
+            return;
+        }
+        
+        const profit = computeProfit(totalKwh, billedKwh, energyCharge, totalBill, taxesLocal);
+        displayResult(profit);
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+    document.getElementById('pdfInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) await processPdfAndCalc(file);
+    });
+</script>
+</body>
+</html>
