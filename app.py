@@ -2,6 +2,7 @@ import streamlit as st
 import fitz  # PyMuPDF
 import re
 
+# Ρύθμιση Σελίδας
 st.set_page_config(page_title="Φ/Β Κέρδος Net Metering", page_icon="☀️", layout="centered")
 
 st.title("☀️ Υπολογιστής Κέρδους Net Metering")
@@ -22,13 +23,7 @@ def parse_dei_pdf(file_bytes):
     if match_total:
         total_kwh = float(match_total.group(1) or match_total.group(2))
 
-    # 2. Χρέωση Ενέργειας
-    energy_charge = None
-    match_energy = re.search(r'Χρέωση\s*Ενέργειας\s*Κανονική[\s\S]{0,50}?(\d+[.,]\d+)', processed_text, re.IGNORECASE)
-    if match_energy:
-        energy_charge = float(match_energy.group(1).replace(',', '.'))
-
-    # 3. Τιμολογημένες Μονάδες ΚΑΙ Ακριβής Τιμή (Από τις παρενθέσεις)
+    # 2. Τιμολογημένες Μονάδες ΚΑΙ Ακριβής Τιμή (Από τις παρενθέσεις)
     billed_kwh = 0
     total_tier_cost = 0.0
     exact_avg_rate = None
@@ -37,7 +32,7 @@ def parse_dei_pdf(file_bytes):
     
     if supply_section:
         section_text = supply_section.group(1)
-        # Βρίσκει μοτίβα όπως: 8kWhx0,13928
+        # Βρίσκει τα κλιμάκια π.χ. (71kWhx0,12905)
         pattern_billed = r'(\d+)\s*[a-zA-Zα-ωΑ-Ω]*\s*[x×X]\s*(\d+[.,]\d+)'
         matches = re.finditer(pattern_billed, section_text)
         
@@ -48,16 +43,21 @@ def parse_dei_pdf(file_bytes):
             billed_kwh += kwh_tier
             total_tier_cost += kwh_tier * rate_tier
             
-    # Υπολογισμός της ακριβούς μέσης τιμής βάσει των κλιμακίων που βρέθηκαν
+    # 3. Υπολογισμός της ακριβούς μέσης τιμής και της Χρέωσης Ενέργειας
+    energy_charge = None
     if billed_kwh > 0:
         exact_avg_rate = total_tier_cost / billed_kwh
-            
-    # Δίχτυ Ασφαλείας αν δεν διαβαστούν σωστά οι παρενθέσεις
-    if billed_kwh == 0 and energy_charge is not None and energy_charge > 0:
-        billed_kwh = round(energy_charge / 0.135)
-        exact_avg_rate = energy_charge / billed_kwh
+        # FIX: Βάζουμε το καθαρό μαθηματικό άθροισμα για να αποφύγουμε λάθη ανάγνωσης!
+        energy_charge = round(total_tier_cost, 2) 
+    else:
+        # Δίχτυ Ασφαλείας αν δεν βρεθούν τα κλιμάκια
+        match_energy = re.search(r'Χρέωση\s*Ενέργειας\s*Κανονική[\s\S]{0,50}?(\d+[.,]\d+)', processed_text, re.IGNORECASE)
+        if match_energy:
+            energy_charge = float(match_energy.group(1).replace(',', '.'))
+            billed_kwh = round(energy_charge / 0.135)
+            exact_avg_rate = energy_charge / billed_kwh if billed_kwh > 0 else 0.139
 
-    # 4. Συνολικό Ποσό
+    # 4. Συνολικό Ποσό Λογαριασμού
     total_bill = None
     match_bill = re.search(r'\*(\d+[.,]\d+)\s*€|Συνολικό\s*ποσό\s*πληρωμής.*?(?:€)?\s*(\d+[.,]\d+)', processed_text, re.IGNORECASE)
     if match_bill:
@@ -84,29 +84,25 @@ if uploaded_file is not None:
                     safe_energy_charge = energy_charge if energy_charge is not None else 0.0
                     safe_total_bill = total_bill if total_bill is not None else 0.0
                     
-                    # Επιλογή της τιμής ρεύματος (Είτε η ακριβής από την παρένθεση, είτε από διαίρεση)
-                    if exact_avg_rate is not None:
-                        avg_rate_no_vat = exact_avg_rate
-                    elif safe_energy_charge > 0 and billed_kwh > 0:
-                        avg_rate_no_vat = safe_energy_charge / billed_kwh
-                    else:
-                        avg_rate_no_vat = 0.139
+                    # Επιλογή της τιμής ρεύματος
+                    avg_rate_no_vat = exact_avg_rate if exact_avg_rate is not None else 0.139
                     
-                    # Προσθήκη ΦΠΑ 6% στην τιμή ενέργειας
+                    # Προσθήκη ΦΠΑ 6% στην τιμή ενέργειας (για ενημέρωση χρήστη)
                     avg_rate_with_vat = avg_rate_no_vat * 1.06
                     
-                    # Το κέρδος ενέργειας υπολογίζεται με την τιμή προ ΦΠΑ, το ΦΠΑ θα μπει στις λοιπές χρεώσεις
+                    # Το κέρδος ενέργειας υπολογίζεται
                     energy_saved = hidden_kwh * avg_rate_no_vat
                     
                     # Υπολογισμός αναλογίας φόρων (ΦΠΑ, Δήμος, κλπ) & Ρυθμιζόμενων
                     if safe_total_bill > 0 and safe_energy_charge > 0 and safe_total_bill > safe_energy_charge:
                         ratio = (safe_total_bill - safe_energy_charge) / safe_energy_charge
                     else:
-                        ratio = 0.18
+                        ratio = 0.18 # Μια μέση ασφαλής αναλογία αν λείπουν δεδομένα
                         
                     taxes_saved = energy_saved * ratio
                     total_saved = energy_saved + taxes_saved
 
+                    # --- ΑΠΟΤΕΛΕΣΜΑΤΑ ---
                     st.success(f"🎉 Το συνολικό σας όφελος σε αυτόν τον λογαριασμό είναι **{total_saved:.2f} €**")
                     
                     col1, col2, col3 = st.columns(3)
@@ -127,14 +123,15 @@ if uploaded_file is not None:
                     **3. Οικονομικό Κέρδος:** Αν αγοράζατε αυτές τις {hidden_kwh:.1f} kWh, θα πληρώνατε **{energy_saved:.2f} €** καθαρά για το ρεύμα. Επειδή όμως γλιτώσατε το ρεύμα, γλιτώσατε αυτόματα και το **ΦΠΑ**, τις **Ρυθμιζόμενες χρεώσεις** και τα **Δημοτικά τέλη** που του αναλογούν, κερδίζοντας επιπλέον **{taxes_saved:.2f} €**!
                     """)
                     
-                    st.info(f"💡 **Συμπέρασμα:** Αν δεν είχατε το φωτοβολταϊκό, θα πληρώνατε περίπου **{(safe_total_bill + total_saved):.2f} €** αντί για **{safe_total_bill:.2f} €**!")
+                    st.info(f"💡 **Συμπέρασμα:** Αν δεν είχατε το φωτοβολταϊκό, ο λογαριασμός δεν θα ήταν **{safe_total_bill:.2f} €**, αλλά θα έφτανε τα **{(safe_total_bill + total_saved):.2f} €**!")
 
-                    with st.expander("🔍 Προβολή πρωτογενών δεδομένων του λογαριασμού"):
+                    # Κρυφό μενού ελέγχου για διαφάνεια
+                    with st.expander("🔍 Προβολή πρωτογενών δεδομένων του λογαριασμού (Debug)"):
                         st.write(f"- **Σύνολο Μετρητή:** {total_kwh} kWh")
                         st.write(f"- **Τιμολογήθηκαν (Χρεώθηκαν):** {billed_kwh} kWh")
                         st.write(f"- **Ακριβής Τιμή Καθαρής Ενέργειας:** {avg_rate_no_vat:.5f} €/kWh")
-                        st.write(f"- **Χρέωση Ενέργειας:** {energy_charge} €")
-                        st.write(f"- **Σύνολο Πληρωμής:** {total_bill} €")
+                        st.write(f"- **Καθαρή Αξία Ενέργειας:** {safe_energy_charge:.2f} €")
+                        st.write(f"- **Σύνολο Πληρωμής:** {safe_total_bill:.2f} €")
                         
             else:
                 st.error("❌ Δεν μπορέσαμε να διαβάσουμε την πλήρη κατανάλωση. Βεβαιωθείτε ότι είναι Εκκαθαριστικός.")
