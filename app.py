@@ -343,3 +343,20 @@ if uploaded_file is not None:
         except Exception as e:
             st.error(f"❌ Παρουσιάστηκε σφάλμα κατά την ανάλυση: {e}")
             st.info("Βεβαιωθείτε ότι ανεβάσατε έγκυρο PDF λογαριασμού ΔΕΗ.")
+
+# ── FOOTER ────────────────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown(
+    """
+    <div style="text-align: center; padding: 16px 0 8px 0; color: #aaa; font-size: 0.95em;">
+        <p style="margin: 0 0 4px 0;">
+            Η εφαρμογή αυτή είναι μια προσφορά της
+            <strong style="color: #4CAF50;">Zarkolia Health</strong>
+        </p>
+        <p style="margin: 0; font-size: 0.9em;">
+            Πάνος Ζαρογουλίδης — Φαρμακοποιός, MSc, MBA, Διαμεσολαβητής
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
