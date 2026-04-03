@@ -16,9 +16,9 @@ def parse_dei_pdf(file_bytes):
     
     processed_text = text.replace("Bkwh", "8kWh").replace("B kwh", "8 kWh").replace("awn", "kWh")
 
-    # 1. Σύνολο Μετρητή (Βελτιωμένο Regex για "Ποσότητα" ή "Κατανάλωση")
+    # 1. Σύνολο Μετρητή (Προστέθηκε η 'Διαφορά Ενδείξεων')
     total_kwh = None
-    match_total = re.search(r'(?:Ποσότητα|Κατανάλωση|Σύνολο|ΚΑΤΑΝΑΛΩΣΗ)\s*(?:kWh)?\s*[:\-\.]?\s*(\d+)', processed_text, re.IGNORECASE)
+    match_total = re.search(r'(?:Διαφορά Ενδείξεων|Ποσότητα|Κατανάλωση|Σύνολο|ΚΑΤΑΝΑΛΩΣΗ)\s*(?:kWh)?\s*[:\-\.]?\s*(\d+)', processed_text, re.IGNORECASE)
     if match_total:
         total_kwh = float(match_total.group(1))
 
@@ -46,10 +46,11 @@ def parse_dei_pdf(file_bytes):
         exact_avg_rate = total_tier_cost / billed_kwh
         energy_charge = round(total_tier_cost, 2) 
     else:
-        match_energy = re.search(r'Χρέωση\s*Ενέργειας\s*Κανονική[\s\S]{0,50}?(\d+[.,]\d+)', processed_text, re.IGNORECASE)
+        # Εναλλακτική αναζήτηση αν αποτύχει η πρώτη
+        match_energy = re.search(r'Χρέωση\s*Ενέργειας[\s\S]{0,50}?(\d+[.,]\d+)', processed_text, re.IGNORECASE)
         if match_energy:
             energy_charge = float(match_energy.group(1).replace(',', '.'))
-            billed_kwh = round(energy_charge / 0.135)
+            billed_kwh = round(energy_charge / 0.135) # Εκτίμηση βάσει παλιού τιμολογίου
             exact_avg_rate = energy_charge / billed_kwh if billed_kwh > 0 else 0.139
 
     # 4. Συνολικό Ποσό Λογαριασμού
@@ -58,7 +59,7 @@ def parse_dei_pdf(file_bytes):
     if match_bill:
         total_bill = float((match_bill.group(1) or match_bill.group(2)).replace(',', '.'))
 
-    return total_kwh, billed_kwh, energy_charge, total_bill, exact_avg_rate
+    return total_kwh, billed_kwh, energy_charge, total_bill, exact_avg_rate, processed_text
 
 # --- UI & ΛΟΓΙΚΗ ---
 uploaded_file = st.file_uploader("📄 Επιλέξτε το PDF του λογαριασμού σας", type="pdf")
@@ -68,7 +69,7 @@ if uploaded_file is not None:
     
     with st.spinner('Αναλύεται ο λογαριασμός...'):
         try:
-            total_kwh, billed_kwh, energy_charge, total_bill, exact_avg_rate = parse_dei_pdf(file_bytes)
+            total_kwh, billed_kwh, energy_charge, total_bill, exact_avg_rate, processed_text = parse_dei_pdf(file_bytes)
             
             if total_kwh and billed_kwh:
                 hidden_kwh = total_kwh - billed_kwh
@@ -79,7 +80,6 @@ if uploaded_file is not None:
                     avg_rate_no_vat = exact_avg_rate if exact_avg_rate is not None else 0.139
                     VAT_RATE = 0.06 # ΦΠΑ 6%
                     
-                    # --- ΝΕΟΣ ΥΠΟΛΟΓΙΣΜΟΣ ΟΦΕΛΟΥΣ ΒΑΣΕΙ ΟΔΗΓΙΑΣ ---
                     # 1. Αξία των μη τιμολογηθεισών kWh
                     saved_energy_value = hidden_kwh * avg_rate_no_vat
                     # 2. ΦΠΑ που αναλογεί στην αξία αυτή
@@ -100,6 +100,13 @@ if uploaded_file is not None:
                     st.write(f"**Αναλογούν ΦΠΑ (6%):** {saved_vat:.2f} €")
 
                     st.info(f"Χωρίς το Φωτοβολταϊκό, ο λογαριασμός σας θα ήταν **{hypo_total_bill:.2f} €** αντί για **{safe_total_bill:.2f} €**.")
+            else:
+                # ΕΔΩ ΕΙΝΑΙ Η ΠΡΟΣΘΗΚΗ: Τι γίνεται αν δεν βρει τα νούμερα
+                st.error("❌ Το πρόγραμμα δεν μπόρεσε να διαβάσει σωστά τις kWh από το PDF.")
+                st.warning(f"Βρέθηκαν: Συνολικές kWh μετρητή: {total_kwh}, Τιμολογημένες kWh: {billed_kwh}")
+                
+                with st.expander("🛠️ Πατήστε εδώ για να δείτε το κείμενο του PDF (Βοηθάει στον εντοπισμό του λάθους)"):
+                    st.text(processed_text)
 
         except Exception as e:
             st.error(f"Προέκυψε σφάλμα κατά την ανάλυση: {e}")
