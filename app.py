@@ -135,28 +135,6 @@ footer {visibility: hidden;}
     font-weight: 500;
 }
 
-/* VAT Compare Card */
-.vat-card {
-    background: #1E293B;
-    border: 1px dashed #3B82F6;
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    text-align: center;
-}
-.vat-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-.vat-box {
-    background: #0F172A;
-    padding: 1rem;
-    border-radius: 12px;
-    border: 1px solid #334155;
-}
-
 /* Clean List Cards for Charges */
 .section-title {
     font-size: 1.2rem;
@@ -204,12 +182,16 @@ footer {visibility: hidden;}
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1rem;
+    border-left: 4px solid #38BDF8;
 }
 .math-header {
-    font-weight: 600;
+    font-weight: 700;
     color: #38BDF8;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 .math-body {
     color: #94A3B8;
@@ -220,43 +202,50 @@ footer {visibility: hidden;}
     background: #1E293B;
     padding: 0.75rem;
     border-radius: 8px;
-    font-family: monospace;
+    font-family: 'Fira Code', monospace;
     color: #E2E8F0;
     margin-top: 0.75rem;
     border: 1px solid #334155;
+    font-weight: 600;
 }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────
-# ΒΙΒΛΙΟΘΗΚΗ ΕΞΗΓΗΣΕΩΝ ΧΡΕΩΣΕΩΝ
+# ΒΙΒΛΙΟΘΗΚΗ ΕΞΗΓΗΣΕΩΝ & ΤΥΠΩΝ ΥΠΟΛΟΓΙΣΜΟΥ ΧΡΕΩΣΕΩΝ
 # ─────────────────────────────────────────────────────────────────
 CHARGE_INFO = {
-    "ΕΤΜΕΑΡ": {"emoji": "🌱", "desc": "Ειδικό Τέλος υπέρ ΑΠΕ", "affected_by_pv": False},
-    "ΥΚΩ": {"emoji": "🏝️", "desc": "Υπηρεσίες Κοινής Ωφέλειας (Επιδότηση νησιών κ.ά.)", "affected_by_pv": False},
-    "ΑΔΜΗΕ: Σύστημα Μεταφοράς": {"emoji": "🔌", "desc": "Δίκτυο Υψηλής Τάσης", "affected_by_pv": False},
-    "Χρέωση Χρήσης Συστήματος": {"emoji": "🔌", "desc": "Δίκτυο Υψηλής Τάσης (ΑΔΜΗΕ)", "affected_by_pv": False},
-    "ΔΕΔΔΗΕ: Δίκτυο Διανομής": {"emoji": "🔌", "desc": "Δίκτυο Διανομής Γειτονιάς", "affected_by_pv": False},
-    "Χρέωση Χρήσης Δικτύου": {"emoji": "🔌", "desc": "Δίκτυο Διανομής Γειτονιάς (ΔΕΔΔΗΕ)", "affected_by_pv": False},
-    "Χρέωση Μέτρησης": {"emoji": "📟", "desc": "Πάγιο χρήσης μετρητή", "affected_by_pv": False},
-    "Πάγια Χρέωση": {"emoji": "📋", "desc": "Σταθερό μηνιαίο πάγιο ΔΕΗ", "affected_by_pv": False},
-    "Τέλος Ανακύκλωσης": {"emoji": "♻️", "desc": "Τέλος ανακύκλωσης συσκευών", "affected_by_pv": False},
-    "ΕΦΚ": {"emoji": "🏛️", "desc": "Ειδικός Φόρος Κατανάλωσης (0.0022 €/kWh)", "affected_by_pv": False},
-    "Ειδικό Τέλος 5‰": {"emoji": "🏛️", "desc": "Ειδικό Τέλος 5/1000 (Ν.2093/92)", "affected_by_pv": False},
-    "Τέλος ΑΠΕ": {"emoji": "🌱", "desc": "Τέλος υπέρ Ανανεώσιμων Πηγών", "affected_by_pv": False},
-    "ΕΔΑΠ": {"emoji": "🏛️", "desc": "Διαχειριστική Αμοιβή ΛΑΓΗΕ", "affected_by_pv": False},
-    "Δημοτικά Τέλη (ΔΤ)": {"emoji": "🗑️", "desc": "Τέλη καθαριότητας & φωτισμού", "affected_by_pv": False},
-    "Δημοτικός Φόρος (ΔΦ)": {"emoji": "🏛️", "desc": "Φόρος ηλεκτροδοτούμενων χώρων", "affected_by_pv": False},
-    "ΤΑΠ": {"emoji": "🏠", "desc": "Τέλος Ακίνητης Περιουσίας", "affected_by_pv": False},
-    "ΕΡΤ": {"emoji": "📺", "desc": "Ανταποδοτικό Τέλος ΕΡΤ", "affected_by_pv": False},
-    "Έκπτ. Πάγιας Εντολής": {"emoji": "🏷️", "desc": "Έκπτωση λόγω εξόφλησης μέσω πάγιας εντολής", "affected_by_pv": False},
-    "GreenPass": {"emoji": "🌿", "desc": "Χρέωση για εγγύηση προέλευσης ενέργειας από ΑΠΕ", "affected_by_pv": False},
-    "Έκπτωση Σταθμών ΑΠΕ": {"emoji": "☀️", "desc": "Ειδική έκπτωση στους λογαριασμούς (ΑΠΕ 1%)", "affected_by_pv": False},
-    "Επιδότηση / Επιβράβευση": {"emoji": "🎁", "desc": "Κρατική Επιδότηση ή Επιβράβευση", "affected_by_pv": False},
-    "Στρογγυλοποίηση": {"emoji": "⚖️", "desc": "Στρογγυλοποίηση τρέχοντος ή προηγούμενου λογαριασμού", "affected_by_pv": False},
-    "Λοιπές Εκπτώσεις": {"emoji": "🏷️", "desc": "Εκπτώσεις συνέπειας ή άλλα προωθητικά", "affected_by_pv": False},
-    "ΦΠΑ": {"emoji": "🧾", "desc": "ΦΠΑ 6%", "affected_by_pv": False},
+    # Προμήθεια
+    "Χρεώσεις Προμήθειας": {"emoji": "⚡", "desc": "Το κόστος ρεύματος της ΔΕΗ.", "type": "energy"},
+    "Πάγια Χρέωση": {"emoji": "📋", "desc": "Σταθερό μηνιαίο πάγιο βάσει συμβολαίου.", "type": "fixed"},
+    "Μηχανισμός Διακύμανσης": {"emoji": "📈", "desc": "Χρέωση/Πίστωση βάσει Χρηματιστηρίου Ενέργειας (ΤΕΑ).", "type": "energy"},
+    
+    # Ρυθμιζόμενες
+    "ΑΔΜΗΕ: Σύστημα Μεταφοράς": {"emoji": "🔌", "desc": "Δίκτυο Υψηλής Τάσης. Περιλαμβάνει πάγιο ισχύος (kVA) και χρέωση ανά kWh.", "type": "per_kwh"},
+    "ΔΕΔΔΗΕ: Δίκτυο Διανομής": {"emoji": "🔌", "desc": "Δίκτυο Μέσης/Χαμηλής Τάσης. Περιλαμβάνει πάγιο ισχύος (kVA) και χρέωση ανά kWh.", "type": "per_kwh"},
+    "ΥΚΩ": {"emoji": "🏝️", "desc": "Υπηρεσίες Κοινής Ωφέλειας (Επιδότηση νησιών, ΚΟΤ).", "type": "per_kwh"},
+    "ΕΤΜΕΑΡ": {"emoji": "🌱", "desc": "Ειδικό Τέλος Μείωσης Εκπομπών Αερίων Ρύπων. Υποστηρίζει την πράσινη ενέργεια.", "type": "per_kwh"},
+    "Χρέωση Μέτρησης": {"emoji": "📟", "desc": "Πάγιο για τη συντήρηση και καταμέτρηση του μετρητή.", "type": "fixed"},
+    
+    # Φόροι & Τέλη
+    "ΕΦΚ": {"emoji": "🏛️", "desc": "Ειδικός Φόρος Κατανάλωσης. Σταθερός φόρος 0,0022€ ανά kWh.", "type": "per_kwh"},
+    "Ειδικό Τέλος 5‰": {"emoji": "🏛️", "desc": "Ειδικό Τέλος 5/1000 (Ν.2093/92). 0,5% επί της Προμήθειας, Ρυθμιζόμενων και ΕΦΚ.", "type": "percentage_5"},
+    "ΦΠΑ": {"emoji": "🧾", "desc": "Φόρος Προστιθέμενης Αξίας (6%).", "type": "percentage_6"},
+    "Τέλος Ανακύκλωσης": {"emoji": "♻️", "desc": "Τέλος υπέρ ανακύκλωσης συσκευών.", "type": "fixed"},
+    
+    # Υπέρ Τρίτων
+    "Δημοτικά Τέλη (ΔΤ)": {"emoji": "🗑️", "desc": "Ανταποδοτικά τέλη καθαριότητας & φωτισμού Δήμου. Υπολογίζεται βάσει τ.μ. ακινήτου.", "type": "municipal"},
+    "Δημοτικός Φόρος (ΔΦ)": {"emoji": "🏛️", "desc": "Φόρος ηλεκτροδοτούμενων χώρων. Υπολογίζεται βάσει τ.μ.", "type": "municipal"},
+    "ΤΑΠ": {"emoji": "🏠", "desc": "Τέλος Ακίνητης Περιουσίας. Υπολογίζεται βάσει τ.μ., παλαιότητας και Τιμής Ζώνης.", "type": "municipal"},
+    "ΕΡΤ": {"emoji": "📺", "desc": "Ανταποδοτικό Τέλος ΕΡΤ (Σταθερό 3€/μήνα).", "type": "ert"},
+    
+    # Εκπτώσεις / Λοιπά
+    "Έκπτ. Πάγιας Εντολής": {"emoji": "🏷️", "desc": "Έκπτωση συνήθως 2% επειδή πληρώνετε μέσω κάρτας/τράπεζας.", "type": "discount"},
+    "GreenPass": {"emoji": "🌿", "desc": "Πιστοποιητικό Εγγύησης Προέλευσης (Πράσινη Ενέργεια).", "type": "fixed"},
+    "Έκπτωση Σταθμών ΑΠΕ": {"emoji": "☀️", "desc": "Έκπτωση (1%) γιατί κοντά σας λειτουργούν σταθμοί ΑΠΕ.", "type": "discount"},
+    "Επιδότηση / ΤΕΜ": {"emoji": "🎁", "desc": "Κρατική Επιδότηση (Ταμείο Ενεργειακής Μετάβασης).", "type": "discount"},
+    "Στρογγυλοποίηση": {"emoji": "⚖️", "desc": "Στρογγυλοποίηση ποσού.", "type": "fixed"},
 }
 
 
@@ -269,7 +258,6 @@ def clean_number(s):
     if s.startswith('-'):
         is_negative = True
         s = s[1:].strip()
-        
     if '.' in s and ',' in s: 
         s = s.replace('.', '').replace(',', '.')
     elif '.' in s and ',' not in s:
@@ -277,7 +265,6 @@ def clean_number(s):
         if len(parts) == 2 and len(parts[1]) == 3: s = s.replace('.', '')
     elif ',' in s and '.' not in s: 
         s = s.replace(',', '.')
-        
     try:
         val = float(s)
         return -val if is_negative else val
@@ -285,7 +272,6 @@ def clean_number(s):
         return 0.0
 
 def get_tariff_rate_from_text(text):
-    """Ανιχνεύει το όνομα του τιμολογίου και επιστρέφει την προεπιλεγμένη τιμή κιλοβατώρας."""
     text_lower = text.lower()
     if "myhome enter two" in text_lower: return 0.145
     if "myhome enter" in text_lower: return 0.145
@@ -293,7 +279,7 @@ def get_tariff_rate_from_text(text):
     if "myhome4all" in text_lower or "myhome 4all" in text_lower: return 0.138
     if "myhome4students" in text_lower: return 0.129
     if "myhome maxima" in text_lower: return 0.132
-    return 0.160 # Γενικό Fallback αν δεν βρεθεί τίποτα
+    return 0.160 
 
 def parse_dei_pdf(file_bytes):
     doc = fitz.open(stream=file_bytes, filetype="pdf")
@@ -302,10 +288,9 @@ def parse_dei_pdf(file_bytes):
 
     processed_text = text.replace("Bkwh", "8kWh").replace("B kwh", "8 kWh").replace("awn", "kWh")
 
-    # --- 0. ΑΝΙΧΝΕΥΣΗ ΤΙΜΟΛΟΓΙΟΥ ---
     detected_rate = get_tariff_rate_from_text(processed_text)
 
-    # --- 1. ΕΝΔΕΙΞΕΙΣ ΜΕΤΡΗΤΗ ---
+    # 1. ΕΝΔΕΙΞΕΙΣ ΜΕΤΡΗΤΗ (Συνολικές kWh)
     total_kwh = 0.0
     meter_totals = re.findall(r'T\d+\s+1[12]\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)', processed_text)
     if meter_totals:
@@ -314,7 +299,7 @@ def parse_dei_pdf(file_bytes):
         match = re.search(r'Κατανάλωση Ηλεκτρικής Ενέργειας\s+([\d\.,]+)\s*kWh', processed_text, re.IGNORECASE)
         if match: total_kwh = clean_number(match.group(1))
 
-    # --- 2. ΣΥΝΟΛΙΚΟ ΠΟΣΟ ΛΟΓΑΡΙΑΣΜΟΥ ---
+    # 2. ΣΥΝΟΛΙΚΟ ΠΟΣΟ
     total_bill = 0.0
     for pattern in [r'Συνολικό\s+(?:πιστωτικό\s+υπόλοιπο|ποσό\s+πληρωμής)\s*(-?[\d\.,]+)\s*€?', r'ΠΙΣΤΩΤΙΚΟ\s+ΥΠΟΛΟΙΠΟ\s*(-?[\d\.,]+)\s*€?', r'\*\s*(-?[\d\.,]+)\s*€']:
         match = re.search(pattern, processed_text, re.IGNORECASE)
@@ -322,31 +307,26 @@ def parse_dei_pdf(file_bytes):
             total_bill = clean_number(match.group(1))
             break
 
-    # --- 3. ΣΑΡΩΣΗ ΟΛΩΝ ΤΩΝ ΜΠΛΕ & ΓΚΡΙ ΠΙΝΑΚΩΝ ---
+    # 3. ΣΑΡΩΣΗ ΧΡΕΩΣΕΩΝ (ΠΡΟΜΗΘΕΙΑ & ΡΥΘΜΙΖΟΜΕΝΕΣ)
     all_charges = {}
-    
     patterns = [
         (r'Χρεώσεις\s+Προμήθειας\s+ΔΕΗ[^\n]*', "Χρεώσεις Προμήθειας"),
         (r'Πάγια\s+Χρέωση[^\n]*', "Πάγια Χρέωση"),
+        (r'Μηχανισμός\s+Διακύμανσης[^\n]*', "Μηχανισμός Διακύμανσης"),
         (r'Έκπτ\.?\s*πάγιας\s+εντολής[^\n]*', "Έκπτ. Πάγιας Εντολής"),
         (r'GreenPass[^\n]*', "GreenPass"),
         (r'ΑΔΜΗΕ[^\n]*', "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
         (r'ΔΕΔΔΗΕ[^\n]*', "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
         (r'ΥΚΩ[^\n]*', "ΥΚΩ"),
         (r'ΕΤΜΕΑΡ[^\n]*', "ΕΤΜΕΑΡ"),
-        (r'Χρέωση\s+Χρήσης\s+Συστήματος[^\n]*', "Χρέωση Χρήσης Συστήματος"),
-        (r'Χρέωση\s+Χρήσης\s+Δικτύου[^\n]*', "Χρέωση Χρήσης Δικτύου"),
         (r'Χρέωση\s+Μέτρησης[^\n]*', "Χρέωση Μέτρησης"),
-        (r'ΕΔΑΠ[^\n]*', "ΕΔΑΠ"),
-        (r'Τέλος\s+ΑΠΕ[^\n]*', "Τέλος ΑΠΕ"),
         (r'Τέλος\s+Ανακύκλωσης[^\n]*', "Τέλος Ανακύκλωσης"),
         (r'ΕΡΤ\b[^\n]*', "ΕΡΤ"),
         (r'Έκπτωση\s+λόγω\s+σταθμών\s+ΑΠΕ[^\n]*', "Έκπτωση Σταθμών ΑΠΕ"),
-        (r'Επιβράβευση[^\n]*', "Επιδότηση / Επιβράβευση"),
-        (r'Πιστώσεις\s+ΤΕΜ[^\n]*', "Επιδότηση / Επιβράβευση"),
+        (r'Επιβράβευση[^\n]*', "Επιδότηση / ΤΕΜ"),
+        (r'Πιστώσεις\s+ΤΕΜ[^\n]*', "Επιδότηση / ΤΕΜ"),
         (r'Στρογγ/ση\s+Πληρ\.\s+Ποσού[^\n]*', "Στρογγυλοποίηση"),
         (r'Ποσό\s+Στρογγ\.?Προηγ\.?Λογ\.[^\n]*', "Στρογγυλοποίηση"),
-        (r'Έκπτωση\s+Συνέπειας[^\n]*', "Λοιπές Εκπτώσεις"),
     ]
     
     for pattern, key in patterns:
@@ -357,32 +337,23 @@ def parse_dei_pdf(file_bytes):
             if numbers:
                 val = clean_number(numbers[-1])
                 if val != 0:
-                    if key in all_charges:
-                        all_charges[key] += val
-                    else:
-                        all_charges[key] = val
+                    all_charges[key] = all_charges.get(key, 0.0) + val
 
-    # --- 4. ΠΙΝΑΚΑΣ "ΔΙΑΦΟΡΑ" (ΕΦΚ & ΕΙΔ. ΤΕΛ.) ---
+    # 4. ΦΟΡΟΙ ΚΑΙ ΤΕΛΗ
     match_efk = re.search(r'ΕΦΚ\s*\(Ν\.3336/05\)[^\d\n]*([\d\.,]+)', processed_text, re.IGNORECASE)
     if match_efk: all_charges["ΕΦΚ"] = clean_number(match_efk.group(1))
 
     match_eidt = re.search(r'ΕΙΔ\.ΤΕΛ\.\s*50/00\s*Ν\.2093/92[^\d\n]*([\d\.,]+)', processed_text, re.IGNORECASE)
     if match_eidt: all_charges["Ειδικό Τέλος 5‰"] = clean_number(match_eidt.group(1))
 
-    # --- 5. ΠΙΝΑΚΑΣ "ΦΠΑ" ---
-    vat_amount = 0.0
     match_vat = re.search(r'ΦΠΑ\s+ΡΕΥΜΑΤΟΣ[^\d\n]*([\d\.,]+)\s*[xX×]\s*6%\s*(?:=)?\s*([\d\.,]+)', processed_text, re.IGNORECASE)
     if match_vat:
         all_charges["__vat_base__"] = clean_number(match_vat.group(1))
-        vat_amount = clean_number(match_vat.group(2))
-    elif "ΦΠΑ" not in all_charges:
+        all_charges["ΦΠΑ"] = clean_number(match_vat.group(2))
+    else:
         m_vat2 = re.search(r'ΦΠΑ[^\d\n]{0,20}([\d\.,]+)', processed_text, re.IGNORECASE)
-        if m_vat2: vat_amount = clean_number(m_vat2.group(1))
-    
-    if vat_amount != 0:
-        all_charges["ΦΠΑ"] = vat_amount
+        if m_vat2: all_charges["ΦΠΑ"] = clean_number(m_vat2.group(1))
 
-    # --- 6. ΠΙΝΑΚΑΣ "ΔΗΜΟΣ" (ΔΤ, ΔΦ, ΤΑΠ) ---
     match_dt = re.search(r'ΔΤ:[^\d\n]*?([\d\.,]+)(?:\s|$)', processed_text)
     if match_dt: all_charges["Δημοτικά Τέλη (ΔΤ)"] = clean_number(match_dt.group(1))
     
@@ -392,7 +363,7 @@ def parse_dei_pdf(file_bytes):
     match_tap = re.search(r'ΤΑΠ[^\n]*?=\s*([\d\.,]+)', processed_text)
     if match_tap: all_charges["ΤΑΠ"] = clean_number(match_tap.group(1))
 
-    # --- 7. ΕΞΑΓΩΓΗ ΤΙΜΟΛΟΓΗΜΕΝΩΝ KWH Ή ΚΑΘΑΡΗΣ ΕΝΕΡΓΕΙΑΣ ---
+    # 5. KWH ΚΑΙ ΤΙΜΗ
     billed_kwh = 0.0
     exact_avg_rate = None
 
@@ -406,17 +377,18 @@ def parse_dei_pdf(file_bytes):
                     exact_avg_rate = r
             except ValueError: pass
 
+    # Καθαρή Αξία
     total_prom = all_charges.get("Χρεώσεις Προμήθειας", 0.0)
     pagia = all_charges.get("Πάγια Χρέωση", 0.0)
     ekpt_pagias = all_charges.get("Έκπτ. Πάγιας Εντολής", 0.0)
     greenpass = all_charges.get("GreenPass", 0.0)
     
-    pure_energy_cost = total_prom - pagia - ekpt_pagias - greenpass
-    pure_energy_cost = round(pure_energy_cost, 2)
+    pure_energy_cost = round(total_prom - pagia - ekpt_pagias - greenpass, 2)
+    if pure_energy_cost <= 0: pure_energy_cost = 0.0
     
-    if pure_energy_cost <= 0:
-        pure_energy_cost = 0.0
-        billed_kwh = 0.0 
+    if billed_kwh == 0 and pure_energy_cost > 0 and exact_avg_rate is None:
+        billed_kwh = round(pure_energy_cost / detected_rate)
+        exact_avg_rate = detected_rate
 
     return total_kwh, billed_kwh, pure_energy_cost, total_bill, exact_avg_rate, detected_rate, all_charges
 
@@ -426,7 +398,7 @@ def parse_dei_pdf(file_bytes):
 # ─────────────────────────────────────────────────────────────────
 st.markdown('<div class="app-header">', unsafe_allow_html=True)
 st.markdown('<div class="app-title">Net Metering Analytics</div>', unsafe_allow_html=True)
-st.markdown('<div class="app-subtitle">Ανάλυση Ενέργειας, Κερδών και Φορολογικών Χρεώσεων ΔΕΗ</div>', unsafe_allow_html=True)
+st.markdown('<div class="app-subtitle">Ολοκληρωμένη Ανάλυση Ενέργειας, Κερδών και Μαθηματική Επαλήθευση Λογαριασμού ΔΕΗ</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 col_upload, col_input = st.columns([1, 1], gap="large")
@@ -440,7 +412,7 @@ with col_input:
         "⚡ Τιμή Ενέργειας Συμβολαίου (€/kWh)", 
         value=0.1600, 
         format="%.4f",
-        help="Η τιμή της κιλοβατώρας βάσει του συμβολαίου σας (π.χ. 0.1250). Το πρόγραμμα ανιχνεύει αυτόματα το τιμολόγιό σας, αλλά μπορείτε να την αλλάξετε χειροκίνητα εάν επιθυμείτε."
+        help="Το σύστημα ανιχνεύει αυτόματα το συμβόλαιό σας. Αν η κατανάλωση έχει μηδενιστεί από το Φ/Β και το πρόγραμμα δεν βρει το όνομα του τιμολογίου, θα χρησιμοποιήσει αυτή την τιμή."
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -448,34 +420,24 @@ with col_input:
 if uploaded_file is not None:
     file_bytes = uploaded_file.read()
 
-    with st.spinner('Ανάλυση Μετρητή & Χρεώσεων...'):
+    with st.spinner('Ανάλυση Μετρητή & Δυναμική Σάρωση Χρεώσεων...'):
         try:
             (total_kwh, billed_kwh, pure_energy_cost, total_bill,
              exact_avg_rate, detected_rate, all_charges) = parse_dei_pdf(file_bytes)
 
             if not total_kwh:
-                st.error("Δεν ήταν δυνατή η ανάγνωση των Ενδείξεων του Μετρητή.")
+                st.error("Δεν ήταν δυνατή η ανάγνωση των Ενδείξεων του Μετρητή. Ελέγξτε αν είναι εκκαθαριστικός.")
             else:
-                # Επιλογή Τιμής: Προτεραιότητα έχει το τι γράφει το PDF (exact), μετά η αυτόματη ανίχνευση (detected), μετά το user input.
-                if exact_avg_rate:
-                    final_rate = exact_avg_rate
-                elif detected_rate != 0.160: # Αν βρήκε όντως όνομα τιμολογίου (π.χ. myHome Enter)
-                    final_rate = detected_rate
-                else:
-                    final_rate = user_rate
-
+                final_rate = exact_avg_rate if exact_avg_rate else (detected_rate if detected_rate != 0.160 else user_rate)
                 hidden_kwh = total_kwh - billed_kwh
+
                 if hidden_kwh <= 0:
-                    st.warning("⚠️ Δεν εντοπίστηκε έκπτωση Net Metering (Μηδενικό κέρδος).")
+                    st.warning("⚠️ Δεν εντοπίστηκε έκπτωση Net Metering. Όλες οι kWh του μετρητή τιμολογήθηκαν.")
                 else:
                     VAT_RATE = 0.06
-                    
-                    billed_energy_value = pure_energy_cost
-                    billed_vat = billed_energy_value * VAT_RATE
-                    
+                    billed_vat = pure_energy_cost * VAT_RATE
                     saved_energy = hidden_kwh * final_rate
                     saved_vat = saved_energy * VAT_RATE
-                    
                     total_saved = saved_energy + saved_vat
 
                     # --- TOP METRICS ---
@@ -504,35 +466,13 @@ if uploaded_file is not None:
                         <div class="hero-tags">
                             <span class="tag">⚡ Μη Τιμολογηθείσες: {hidden_kwh:.0f} kWh</span>
                             <span class="tag">💶 Αξία Καθαρής Ενέργειας: {saved_energy:.2f} €</span>
-                            <span class="tag">📊 Χρησιμοποιούμενη Τιμή: {final_rate:.4f} €/kWh</span>
+                            <span class="tag">📊 Τιμή Υπολογισμού: {final_rate:.4f} €/kWh</span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
 
                     if total_bill < 0:
                         st.info(f"🎉 **Ο λογαριασμός σας είναι πιστωτικός!** Η ΔΕΗ σάς επιστρέφει **{abs(total_bill):.2f} €**.")
-
-                    # --- VAT COMPARISON CARD ---
-                    st.markdown(f"""
-                    <div class="vat-card">
-                        <h4 style="color: #F8FAFC; margin-bottom: 0.5rem; font-weight: 700;">Ανάλυση Οφέλους Φ.Π.Α. (6%)</h4>
-                        <p style="color: #94A3B8; font-size: 0.9rem; margin-bottom: 1rem;">Πόσο ΦΠΑ πληρώσατε για την ενέργεια που τραβήξατε, και πόσο ΦΠΑ γλιτώσατε χάρη στο Net Metering.</p>
-                        <div class="vat-grid">
-                            <div class="vat-box">
-                                <div style="color: #F5A623; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">ΦΠΑ που Τιμολογηθηκε</div>
-                                <div style="font-size: 1.5rem; font-family: 'Fira Code', monospace; color: #F8FAFC; font-weight: 700;">{billed_vat:.2f} €</div>
-                                <div style="font-size: 0.75rem; color: #64748B; margin-top: 0.3rem;">({billed_energy_value:.2f} € Καθαρή Ενέργεια × 6%)</div>
-                            </div>
-                            <div class="vat-box" style="border-color: #10B981; background: rgba(16, 185, 129, 0.05);">
-                                <div style="color: #10B981; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">ΦΠΑ που Γλιτωσατε (Κερδος)</div>
-                                <div style="font-size: 1.5rem; font-family: 'Fira Code', monospace; color: #10B981; font-weight: 700;">+{saved_vat:.2f} €</div>
-                                <div style="font-size: 0.75rem; color: #64748B; margin-top: 0.3rem;">({saved_energy:.2f} € Γλιτωμένη Ενέργεια × 6%)</div>
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    st.markdown("---")
 
                     # --- COLUMNS FOR CHARGES ---
                     col_left, col_right = st.columns(2, gap="large")
@@ -552,81 +492,91 @@ if uploaded_file is not None:
                                 <div class="list-item-title">⚡ Αξία Τιμολογηθείσας Ενέργειας</div>
                                 <div class="list-item-desc">Η καθαρή αξία της ενέργειας (Χωρίς Πάγια)</div>
                             </div>
-                            <div class="list-item-amount text-orange">{billed_energy_value:.2f} €</div>
+                            <div class="list-item-amount text-orange">{pure_energy_cost:.2f} €</div>
                         </div>
                         """, unsafe_allow_html=True)
 
                     with col_right:
-                        st.markdown('<div class="section-title">📋 Αναλυτικές Χρεώσεις (Μπλε & Γκρι Πίνακες)</div>', unsafe_allow_html=True)
+                        st.markdown('<div class="section-title">📋 Αναλυτικές Χρεώσεις Λογαριασμού</div>', unsafe_allow_html=True)
                         standard_html = ""
                         
-                        if not all_charges:
-                            standard_html = "<div style='color:#94A3B8; font-size:0.9rem;'>Δεν εντοπίστηκαν ρυθμιζόμενες χρεώσεις.</div>"
-                        else:
-                            for charge_name, amount in all_charges.items():
-                                if charge_name == "Χρεώσεις Προμήθειας" or charge_name.startswith("__"): continue
-                                
-                                info = CHARGE_INFO.get(charge_name, {"emoji": "📋", "desc": "Πρόσθετη Χρέωση / Έκπτωση"})
-                                amount_color = "text-green" if amount < 0 else "text-normal"
-                                sign = "+" if amount > 0 else ""
-                                
-                                standard_html += f"""
-                                <div class="list-item">
-                                    <div class="list-item-left">
-                                        <div class="list-item-title">{info['emoji']} {charge_name}</div>
-                                        <div class="list-item-desc">{info['desc']}</div>
-                                    </div>
-                                    <div class="list-item-amount {amount_color}">{sign}{amount:.2f} €</div>
+                        for charge_name, amount in all_charges.items():
+                            if charge_name == "Χρεώσεις Προμήθειας" or charge_name.startswith("__"): continue
+                            info = CHARGE_INFO.get(charge_name, {"emoji": "📋", "desc": "Πρόσθετη Χρέωση"})
+                            amount_color = "text-green" if amount < 0 else "text-normal"
+                            sign = "+" if amount > 0 else ""
+                            
+                            standard_html += f"""
+                            <div class="list-item">
+                                <div class="list-item-left">
+                                    <div class="list-item-title">{info['emoji']} {charge_name}</div>
+                                    <div class="list-item-desc">{info['desc']}</div>
                                 </div>
-                                """
+                                <div class="list-item-amount {amount_color}">{sign}{amount:.2f} €</div>
+                            </div>
+                            """
                         st.markdown(standard_html, unsafe_allow_html=True)
 
-                    # --- MATH VERIFICATION (ΔΥΝΑΜΙΚΗ ΑΠΕΙΚΟΝΙΣΗ ΟΛΩΝ ΤΩΝ ΧΡΕΩΣΕΩΝ) ---
+                    # --- ΜΑΘΗΜΑΤΙΚΟ ΓΛΩΣΣΑΡΙ ---
                     st.markdown("<br><br>", unsafe_allow_html=True)
-                    st.markdown('<div class="section-title">🧮 Γλωσσάρι & Υπολογισμός ΟΛΩΝ των Χρεώσεων</div>', unsafe_allow_html=True)
-
-                    abbreviations_info = {
-                        "ΑΔΜΗΕ: Σύστημα Μεταφοράς": ("Α.Δ.Μ.Η.Ε.", "Δίκτυο Υψηλής Τάσης", True),
-                        "Χρέωση Χρήσης Συστήματος": ("Α.Δ.Μ.Η.Ε.", "Δίκτυο Υψηλής Τάσης", True),
-                        "ΔΕΔΔΗΕ: Δίκτυο Διανομής": ("Δ.Ε.Δ.Δ.Η.Ε.", "Δίκτυο Διανομής (Γειτονιάς)", True),
-                        "Χρέωση Χρήσης Δικτύου": ("Δ.Ε.Δ.Δ.Η.Ε.", "Δίκτυο Διανομής (Γειτονιάς)", True),
-                        "ΥΚΩ": ("Υ.Κ.Ω.", "Υπηρεσίες Κοινής Ωφέλειας (Επιδότηση νησιών)", True),
-                        "ΕΤΜΕΑΡ": ("Ε.Τ.Μ.Ε.Α.Ρ.", "Ειδικό Τέλος υπέρ ΑΠΕ", True),
-                        "ΕΦΚ": ("Ε.Φ.Κ.", "Ειδικός Φόρος Κατανάλωσης", True),
-                        "Ειδικό Τέλος 5‰": ("ΕΙΔ. ΤΕΛΟΣ", "Ειδικό Τέλος 5/1000", False),
-                        "ΕΔΑΠ": ("Ε.Δ.Α.Π.", "Διαχειριστική Αμοιβή ΛΑΓΗΕ", True),
-                        "Τέλος ΑΠΕ": ("Α.Π.Ε.", "Τέλος Ανανεώσιμων Πηγών", True),
-                        "Δημοτικά Τέλη (ΔΤ)": ("ΔΗΜΟΣ", "Δημοτικά Τέλη Καθαριότητας & Φωτισμού", False),
-                        "Δημοτικός Φόρος (ΔΦ)": ("ΔΗΜΟΣ", "Δημοτικός Φόρος", False),
-                        "ΤΑΠ": ("ΔΗΜΟΣ", "Τέλος Ακίνητης Περιουσίας", False),
-                        "ΦΠΑ": ("Φ.Π.Α.", "Φόρος Προστιθέμενης Αξίας 6%", False)
-                    }
+                    st.markdown('<div class="section-title">🧮 Γλωσσάρι & Μαθηματική Επαλήθευση (Πώς προέκυψε το κάθε ποσό)</div>', unsafe_allow_html=True)
+                    st.markdown("<p style='color:#94A3B8; margin-bottom:1.5rem;'>Το πρόγραμμα έκανε αντίστροφα τα μαθηματικά για να σας αποδείξει πώς ακριβώς χρεωθήκατε την κάθε κατηγορία βάσει της ΔΕΗ.</p>", unsafe_allow_html=True)
 
                     math_html = ""
-                    # Σαρώνουμε τη ΣΤΑΘΕΡΗ λίστα abbreviations_info αντί για τις τρέχουσες χρεώσεις!
-                    for dict_key, (abbr, full_name, per_kwh) in abbreviations_info.items():
-                        val = all_charges.get(dict_key, 0.0) # Παίρνει την τιμή αν υπάρχει, αλλιώς 0.0
+                    
+                    # Σαρώνουμε δυναμικά ΟΛΕΣ τις χρεώσεις που βρήκε το πρόγραμμα (εξαιρώντας την ακαθάριστη προμήθεια)
+                    for charge_name, val in all_charges.items():
+                        if charge_name == "Χρεώσεις Προμήθειας" or charge_name.startswith("__") or val == 0:
+                            continue
+                            
+                        info = CHARGE_INFO.get(charge_name, {"emoji": "📌", "desc": "Πρόσθετη Χρέωση", "type": "fixed"})
+                        c_type = info.get("type", "fixed")
                         
-                        if dict_key == "ΦΠΑ":
-                            vat_base = all_charges.get('__vat_base__', 0)
-                            formula = f"{vat_base:.2f} € × 6% = {val:.2f} €"
-                            text = "Υπολογίζεται επί της καθαρής αξίας ενέργειας και των ρυθμιζόμενων χρεώσεων."
-                        elif per_kwh and total_kwh and total_kwh > 0:
-                            rate = val / total_kwh
+                        # Δυναμική δημιουργία μαθηματικού τύπου
+                        if c_type == "per_kwh" and total_kwh > 0:
+                            rate = abs(val) / total_kwh
                             formula = f"{total_kwh:.0f} kWh × {rate:.5f} €/kWh = {val:.2f} €"
-                            text = "Υπολογίζεται αυστηρά επί των συνολικών kWh του μετρητή. Το net metering δεν σας απαλλάσσει από αυτή τη χρέωση."
-                        else:
+                            text = "Η χρέωση υπολογίζεται <b>επί των συνολικών kWh του μετρητή</b> (δηλαδή όλο το ρεύμα που καταναλώσατε). Το Net Metering <u>δεν σας απαλλάσσει</u> από αυτό το κόστος."
+                            
+                        elif c_type == "percentage_6":
+                            base = all_charges.get('__vat_base__', 0)
+                            if base > 0:
+                                formula = f"{base:.2f} € × 6% = {val:.2f} €"
+                            else:
+                                formula = f"Βάση Υπολογισμού × 6% = {val:.2f} €"
+                            text = "Ο ΦΠΑ υπολογίζεται προσθέτοντας την αξία της Ενέργειας, τις Ρυθμιζόμενες Χρεώσεις και τον ΕΦΚ, και πολλαπλασιάζοντας με το 6%."
+                            
+                        elif c_type == "percentage_5":
+                            formula = f"Βάση Υπολογισμού × 0.5% = {val:.2f} €"
+                            text = "Ειδικό τέλος (Νόμος 2093/92). Προκύπτει πολλαπλασιάζοντας την αξία ρεύματος, τις ρυθμιζόμενες και τον ΕΦΚ επί 5 τοις χιλίοις."
+                            
+                        elif c_type == "municipal":
+                            formula = f"Τετραγωνικά (τ.μ.) × Τιμή Ζώνης × (Ημέρες/365) = {val:.2f} €"
+                            text = "Η χρέωση αυτή αφορά το Δήμο σας. Δεν έχει καμία σχέση με το ρεύμα ή τις kWh. Υπολογίζεται βάσει των τετραγωνικών μέτρων του σπιτιού και των ημερών του λογαριασμού."
+                            
+                        elif c_type == "ert":
+                            formula = f"3,00 € × (Ημέρες / 30) = {val:.2f} €"
+                            text = "Το ανταποδοτικό τέλος της ΕΡΤ είναι σταθερό στα 3€ το μήνα. Το ποσό προσαρμόζεται ανάλογα με το πόσες μέρες αφορά ο λογαριασμός σας."
+                            
+                        elif c_type == "discount":
                             formula = f"{val:.2f} €"
-                            text = "Σταθερό ποσό ή υπολογιζόμενο βάσει των τετραγωνικών μέτρων του ακινήτου."
+                            text = "Πρόκειται για έκπτωση (αρνητικό πρόσημο) που αφαιρείται απευθείας από το τελικό ποσό του λογαριασμού σας."
+                            
+                        else: # fixed or energy
+                            formula = f"{val:.2f} €"
+                            text = "Πρόκειται για σταθερό ποσό ή χρέωση που προκύπτει αυτοτελώς (π.χ. πάγιο βάσει συμβολαίου)."
 
                         math_html += f"""
                         <div class="math-container">
-                            <div class="math-header">{abbr} — {full_name}</div>
-                            <div class="math-body">{text}</div>
+                            <div class="math-header">{info['emoji']} {charge_name}</div>
+                            <div class="math-body">
+                                <b>Τι είναι:</b> {info['desc']}<br>
+                                <span style="color:#A1A1AA; display:inline-block; margin-top:4px;">{text}</span>
+                            </div>
                             <div class="math-formula">{formula}</div>
                         </div>
                         """
-                    
+                        
                     st.markdown(math_html, unsafe_allow_html=True)
 
         except Exception as e:
