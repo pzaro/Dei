@@ -28,7 +28,7 @@ footer {visibility: hidden;}
 /* Typography */
 .app-header {
     text-align: center;
-    padding: 2rem 0 3rem 0;
+    padding: 2rem 0 2rem 0;
 }
 .app-title {
     font-size: 2.8rem;
@@ -43,6 +43,16 @@ footer {visibility: hidden;}
     font-size: 1.1rem;
     color: #94A3B8;
     font-weight: 400;
+}
+
+/* User Input Box */
+.input-container {
+    background: #1E293B;
+    border: 1px solid #3B82F6;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
 }
 
 /* Metric Cards */
@@ -254,7 +264,7 @@ CHARGE_INFO = {
 }
 
 # ─────────────────────────────────────────────────────────────────
-# ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ (Αναβαθμισμένες για αρνητικούς αριθμούς)
+# ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ
 # ─────────────────────────────────────────────────────────────────
 def clean_number(s):
     """Καθαρίζει τα νούμερα, κρατώντας και τα ΑΡΝΗΤΙΚΑ πρόσημα (-)."""
@@ -279,15 +289,15 @@ def clean_number(s):
     except ValueError:
         return 0.0
 
+
 def parse_dei_pdf(file_bytes):
     doc = fitz.open(stream=file_bytes, filetype="pdf")
     text = ""
     for page in doc: text += page.get_text("text") + "\n"
 
-    # Διορθώσεις OCR
     processed_text = text.replace("Bkwh", "8kWh").replace("B kwh", "8 kWh").replace("awn", "kWh")
 
-    # --- 1. ΕΝΔΕΙΞΕΙΣ ΜΕΤΡΗΤΗ (Συνολική Κατανάλωση) ---
+    # --- 1. ΕΝΔΕΙΞΕΙΣ ΜΕΤΡΗΤΗ ---
     total_kwh = 0.0
     meter_totals = re.findall(r'T\d+\s+1[12]\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)', processed_text)
     if meter_totals:
@@ -296,23 +306,7 @@ def parse_dei_pdf(file_bytes):
         match = re.search(r'Κατανάλωση Ηλεκτρικής Ενέργειας\s+([\d\.,]+)\s*kWh', processed_text, re.IGNORECASE)
         if match: total_kwh = clean_number(match.group(1))
 
-    # --- 2. ΧΡΕΩΣΕΙΣ ΠΡΟΜΗΘΕΙΑΣ (Τιμολογηθείσα Ενέργεια) ---
-    billed_kwh = 0.0
-    total_tier_cost = 0.0
-    
-    supply_section = re.search(r'Αναλυτικά οι χρεώσεις(.*?)Ρυθμιζόμενες\s*Χρεώσεις', processed_text, re.IGNORECASE | re.DOTALL)
-    if supply_section:
-        for m in re.finditer(r'\(?\s*(\d+)\s*[kK][wW][hH]\s*[xX×]\s*([\d,\.]+)\s*€?/?\s*[kK][wW][hH]\s*\)?', supply_section.group(1), re.IGNORECASE):
-            try:
-                k, r = float(m.group(1)), clean_number(m.group(2))
-                if r >= 0.001: 
-                    billed_kwh += k
-                    total_tier_cost += k * r
-            except ValueError: pass
-
-    exact_avg_rate = total_tier_cost / billed_kwh if billed_kwh > 0 else 0.139
-    
-    # --- 3. ΣΥΝΟΛΙΚΟ ΠΟΣΟ ΛΟΓΑΡΙΑΣΜΟΥ ---
+    # --- 2. ΣΥΝΟΛΙΚΟ ΠΟΣΟ ΛΟΓΑΡΙΑΣΜΟΥ ---
     total_bill = 0.0
     for pattern in [r'Συνολικό\s+(?:πιστωτικό\s+υπόλοιπο|ποσό\s+πληρωμής)\s*(-?[\d\.,]+)\s*€?', r'ΠΙΣΤΩΤΙΚΟ\s+ΥΠΟΛΟΙΠΟ\s*(-?[\d\.,]+)\s*€?', r'\*\s*(-?[\d\.,]+)\s*€']:
         match = re.search(pattern, processed_text, re.IGNORECASE)
@@ -320,67 +314,55 @@ def parse_dei_pdf(file_bytes):
             total_bill = clean_number(match.group(1))
             break
 
-    # --- 4. ΣΑΡΩΣΗ ΟΛΩΝ ΤΩΝ ΜΠΛΕ & ΓΚΡΙ ΠΙΝΑΚΩΝ (Θετικά και Αρνητικά) ---
+    # --- 3. ΣΑΡΩΣΗ ΟΛΩΝ ΤΩΝ ΜΠΛΕ & ΓΚΡΙ ΠΙΝΑΚΩΝ (Ασφαλής μέθοδος για αρνητικά/θετικά) ---
     all_charges = {}
     
     patterns = [
-        (r'Χρεώσεις\s+Προμήθειας\s+ΔΕΗ[^\d\n-]{0,20}?(-?[\d\.,]+)', "Χρεώσεις Προμήθειας"),
-        (r'Πάγια\s+Χρέωση[^\d\n-]{0,20}?(-?[\d\.,]+)', "Πάγια Χρέωση"),
-        (r'Έκπτ\.?\s*πάγιας\s+εντολής[^\d\n-]{0,20}?(-?[\d\.,]+)', "Έκπτ. Πάγιας Εντολής"),
-        (r'GreenPass[^\d\n-]{0,20}?(-?[\d\.,]+)', "GreenPass"),
-        (r'ΑΔΜΗΕ[^\d\n-]{0,50}?(-?[\d\.,]+)', "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
-        (r'ΔΕΔΔΗΕ[^\d\n-]{0,50}?(-?[\d\.,]+)', "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
-        (r'ΥΚΩ[^\d\n-]{0,50}?(-?[\d\.,]+)', "ΥΚΩ"),
-        (r'ΕΤΜΕΑΡ[^\d\n-]{0,20}(-?[\d\.,]+)', "ΕΤΜΕΑΡ"),
-        (r'Χρέωση\s+Χρήσης\s+Συστήματος[^\d\n-]{0,20}(-?[\d\.,]+)', "Χρέωση Χρήσης Συστήματος"),
-        (r'Χρέωση\s+Χρήσης\s+Δικτύου[^\d\n-]{0,20}(-?[\d\.,]+)', "Χρέωση Χρήσης Δικτύου"),
-        (r'Χρέωση\s+Μέτρησης[^\d\n-]{0,20}(-?[\d\.,]+)', "Χρέωση Μέτρησης"),
-        (r'ΕΔΑΠ[^\d\n-]{0,20}(-?[\d\.,]+)', "ΕΔΑΠ"),
-        (r'Τέλος\s+ΑΠΕ[^\d\n-]{0,20}(-?[\d\.,]+)', "Τέλος ΑΠΕ"),
-        (r'Τέλος\s+Ανακύκλωσης[^\d\n-]{0,20}(-?[\d\.,]+)', "Τέλος Ανακύκλωσης"),
-        (r'ΕΡΤ[^\d\n-]{0,30}?(-?[\d\.,]+)', "ΕΡΤ"),
-        (r'Έκπτωση\s+λόγω\s+σταθμών\s+ΑΠΕ[^\d\n-]{0,20}?(-?[\d\.,]+)', "Έκπτωση Σταθμών ΑΠΕ"),
-        (r'Επιβράβευση[^\d\n-]{0,30}?(-?[\d\.,]+)', "Επιδότηση / Επιβράβευση"),
-        (r'Πιστώσεις\s+ΤΕΜ[^\d\n-]{0,30}?(-?[\d\.,]+)', "Επιδότηση / Επιβράβευση"),
-        (r'Στρογγ/ση\s+Πληρ\.\s+Ποσού[^\d\n-]{0,20}?(-?[\d\.,]+)', "Στρογγυλοποίηση"),
-        (r'Ποσό\s+Στρογγ\.?Προηγ\.?Λογ\.[^\d\n-]{0,20}?(-?[\d\.,]+)', "Στρογγυλοποίηση"),
-        (r'Έκπτωση\s+Συνέπειας[^\d\n-]{0,20}?(-?[\d\.,]+)', "Λοιπές Εκπτώσεις"),
+        (r'Χρεώσεις\s+Προμήθειας\s+ΔΕΗ[^\n]*', "Χρεώσεις Προμήθειας"),
+        (r'Πάγια\s+Χρέωση[^\n]*', "Πάγια Χρέωση"),
+        (r'Έκπτ\.?\s*πάγιας\s+εντολής[^\n]*', "Έκπτ. Πάγιας Εντολής"),
+        (r'GreenPass[^\n]*', "GreenPass"),
+        (r'ΑΔΜΗΕ[^\n]*', "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
+        (r'ΔΕΔΔΗΕ[^\n]*', "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
+        (r'ΥΚΩ[^\n]*', "ΥΚΩ"),
+        (r'ΕΤΜΕΑΡ[^\n]*', "ΕΤΜΕΑΡ"),
+        (r'Χρέωση\s+Χρήσης\s+Συστήματος[^\n]*', "Χρέωση Χρήσης Συστήματος"),
+        (r'Χρέωση\s+Χρήσης\s+Δικτύου[^\n]*', "Χρέωση Χρήσης Δικτύου"),
+        (r'Χρέωση\s+Μέτρησης[^\n]*', "Χρέωση Μέτρησης"),
+        (r'ΕΔΑΠ[^\n]*', "ΕΔΑΠ"),
+        (r'Τέλος\s+ΑΠΕ[^\n]*', "Τέλος ΑΠΕ"),
+        (r'Τέλος\s+Ανακύκλωσης[^\n]*', "Τέλος Ανακύκλωσης"),
+        (r'ΕΡΤ\b[^\n]*', "ΕΡΤ"),
+        (r'Έκπτωση\s+λόγω\s+σταθμών\s+ΑΠΕ[^\n]*', "Έκπτωση Σταθμών ΑΠΕ"),
+        (r'Επιβράβευση[^\n]*', "Επιδότηση / Επιβράβευση"),
+        (r'Πιστώσεις\s+ΤΕΜ[^\n]*', "Επιδότηση / Επιβράβευση"),
+        (r'Στρογγ/ση\s+Πληρ\.\s+Ποσού[^\n]*', "Στρογγυλοποίηση"),
+        (r'Ποσό\s+Στρογγ\.?Προηγ\.?Λογ\.[^\n]*', "Στρογγυλοποίηση"),
+        (r'Έκπτωση\s+Συνέπειας[^\n]*', "Λοιπές Εκπτώσεις"),
     ]
     
     for pattern, key in patterns:
-        match = re.search(pattern, processed_text, re.IGNORECASE | re.MULTILINE)
-        if match:
-            val = clean_number(match.group(1))
-            if val != 0: # <-- Πλέον κρατάει και τα αρνητικά (εκπτώσεις)
-                if key in all_charges:
-                    all_charges[key] += val # Προσθέτει π.χ. πολλαπλές στρογγυλοποιήσεις
-                else:
-                    all_charges[key] = val
+        matches = re.finditer(pattern, processed_text, re.IGNORECASE)
+        for match in matches:
+            line_text = match.group(0)
+            # Ψάχνει όλους τους αριθμούς (με ή χωρίς -) στη γραμμή
+            numbers = re.findall(r'-?\d+(?:[\.,]\d+)?', line_text)
+            if numbers:
+                val = clean_number(numbers[-1]) # Το τελευταίο νούμερο της γραμμής είναι συνήθως το ποσό €
+                if val != 0:
+                    if key in all_charges:
+                        all_charges[key] += val
+                    else:
+                        all_charges[key] = val
 
-    # *ΔΙΟΡΘΩΣΗ ΓΙΑ ΤΙΜΟΛΟΓΗΘΕΙΣΑ ΕΝΕΡΓΕΙΑ:*
-    if billed_kwh == 0 and "Χρεώσεις Προμήθειας" in all_charges:
-        charge_promithias = all_charges["Χρεώσεις Προμήθειας"]
-        if charge_promithias > 0:
-            exact_avg_rate = 0.139 
-            billed_kwh = round(charge_promithias / exact_avg_rate)
-
-    # --- 5. ΠΙΝΑΚΑΣ "ΔΙΑΦΟΡΑ" (ΕΦΚ & ΕΙΔ. ΤΕΛ.) ---
+    # --- 4. ΠΙΝΑΚΑΣ "ΔΙΑΦΟΡΑ" (ΕΦΚ & ΕΙΔ. ΤΕΛ.) ---
     match_efk = re.search(r'ΕΦΚ\s*\(Ν\.3336/05\)[^\d\n]*([\d\.,]+)', processed_text, re.IGNORECASE)
     if match_efk: all_charges["ΕΦΚ"] = clean_number(match_efk.group(1))
 
     match_eidt = re.search(r'ΕΙΔ\.ΤΕΛ\.\s*50/00\s*Ν\.2093/92[^\d\n]*([\d\.,]+)', processed_text, re.IGNORECASE)
     if match_eidt: all_charges["Ειδικό Τέλος 5‰"] = clean_number(match_eidt.group(1))
 
-    # --- 6. ΠΙΝΑΚΑΣ "ΦΠΑ" ---
-    vat_amount = 0.0
-    match_vat = re.search(r'ΦΠΑ\s+ΡΕΥΜΑΤΟΣ[^\d\n]*([\d\.,]+)\s*[xX×]\s*6%\s*(?:=)?\s*([\d\.,]+)', processed_text, re.IGNORECASE)
-    if match_vat:
-        vat_amount = clean_number(match_vat.group(2))
-    elif "ΦΠΑ" not in all_charges:
-        m_vat2 = re.search(r'ΦΠΑ[^\d\n]{0,20}([\d\.,]+)', processed_text, re.IGNORECASE)
-        if m_vat2: vat_amount = clean_number(m_vat2.group(1))
-
-    # --- 7. ΠΙΝΑΚΑΣ "ΔΗΜΟΣ" (ΔΤ, ΔΦ, ΤΑΠ) ---
+    # --- 5. ΠΙΝΑΚΑΣ "ΔΗΜΟΣ" (ΔΤ, ΔΦ, ΤΑΠ) ---
     match_dt = re.search(r'ΔΤ:[^\d\n]*?([\d\.,]+)(?:\s|$)', processed_text)
     if match_dt: all_charges["Δημοτικά Τέλη (ΔΤ)"] = clean_number(match_dt.group(1))
     
@@ -390,7 +372,35 @@ def parse_dei_pdf(file_bytes):
     match_tap = re.search(r'ΤΑΠ[^\n]*?=\s*([\d\.,]+)', processed_text)
     if match_tap: all_charges["ΤΑΠ"] = clean_number(match_tap.group(1))
 
-    return total_kwh, billed_kwh, total_bill, exact_avg_rate, vat_amount, all_charges
+    # --- 6. ΕΞΑΓΩΓΗ ΤΙΜΟΛΟΓΗΜΕΝΩΝ KWH Ή ΚΑΘΑΡΗΣ ΕΝΕΡΓΕΙΑΣ ---
+    billed_kwh = 0.0
+    exact_avg_rate = None
+
+    # Ψάχνουμε αν υπάρχει αναλυτική πράξη ενέργειας "X kWh x 0.XXX"
+    supply_section = re.search(r'Αναλυτικά οι χρεώσεις(.*?)Ρυθμιζόμενες\s*Χρεώσεις', processed_text, re.IGNORECASE | re.DOTALL)
+    if supply_section:
+        for m in re.finditer(r'\(?\s*(\d+)\s*[kK][wW][hH]\s*[xX×]\s*([\d,\.]+)\s*€?/?\s*[kK][wW][hH]\s*\)?', supply_section.group(1), re.IGNORECASE):
+            try:
+                k, r = float(m.group(1)), clean_number(m.group(2))
+                if r >= 0.001: 
+                    billed_kwh += k
+                    exact_avg_rate = r
+            except ValueError: pass
+
+    # Υπολογισμός ΚΑΘΑΡΗΣ αξίας ενέργειας (αφαιρούμε πάγια & εκπτώσεις από το "Χρεώσεις Προμήθειας")
+    total_prom = all_charges.get("Χρεώσεις Προμήθειας", 0.0)
+    pagia = all_charges.get("Πάγια Χρέωση", 0.0)
+    ekpt_pagias = all_charges.get("Έκπτ. Πάγιας Εντολής", 0.0)
+    greenpass = all_charges.get("GreenPass", 0.0)
+    
+    pure_energy_cost = total_prom - pagia - ekpt_pagias - greenpass
+    pure_energy_cost = round(pure_energy_cost, 2)
+    
+    if pure_energy_cost <= 0:
+        pure_energy_cost = 0.0
+        billed_kwh = 0.0 # Το Net metering μηδένισε εντελώς την ενέργεια
+
+    return total_kwh, billed_kwh, pure_energy_cost, total_bill, exact_avg_rate, all_charges
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -401,32 +411,47 @@ st.markdown('<div class="app-title">Net Metering Analytics</div>', unsafe_allow_
 st.markdown('<div class="app-subtitle">Ανάλυση Ενέργειας, Κερδών και Φορολογικών Χρεώσεων ΔΕΗ</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("", type="pdf")
+# Νέο Πεδίο Εισαγωγής (Δίπλα στο File Uploader)
+col_upload, col_input = st.columns([1, 1], gap="large")
+
+with col_upload:
+    uploaded_file = st.file_uploader("📄 Ανεβάστε το PDF του λογαριασμού σας", type="pdf")
+
+with col_input:
+    st.markdown('<div class="input-container">', unsafe_allow_html=True)
+    user_rate = st.number_input(
+        "⚡ Τιμή Ενέργειας Συμβολαίου (€/kWh)", 
+        value=0.1600, 
+        format="%.4f",
+        help="Εισάγετε τη συμφωνημένη τιμή της kWh βάσει του συμβολαίου σας (π.χ. 0.1250). Το πρόγραμμα θα τη χρησιμοποιήσει αν η κατανάλωση σας έχει μηδενιστεί και δεν αναγράφεται στο PDF."
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 if uploaded_file is not None:
     file_bytes = uploaded_file.read()
 
     with st.spinner('Ανάλυση Μετρητή & Χρεώσεων...'):
         try:
-            (total_kwh, billed_kwh, total_bill,
-             exact_avg_rate, actual_vat, all_charges) = parse_dei_pdf(file_bytes)
+            (total_kwh, billed_kwh, pure_energy_cost, total_bill,
+             exact_avg_rate, all_charges) = parse_dei_pdf(file_bytes)
 
             if not total_kwh:
                 st.error("Δεν ήταν δυνατή η ανάγνωση των Ενδείξεων του Μετρητή.")
             else:
-                # Υπολογισμοί Net Metering
+                # Επιλογή Τιμής (Από PDF αν υπάρχει, αλλιώς από User Input)
+                final_rate = exact_avg_rate if exact_avg_rate else user_rate
+
                 hidden_kwh = total_kwh - billed_kwh
                 if hidden_kwh <= 0:
                     st.warning("⚠️ Δεν εντοπίστηκε έκπτωση Net Metering (Μηδενικό κέρδος).")
                 else:
                     VAT_RATE = 0.06
                     
-                    # Αξία της ενέργειας που τιμολογήθηκε
-                    billed_energy_value = all_charges.get("Χρεώσεις Προμήθειας", 0.0)
+                    billed_energy_value = pure_energy_cost
                     billed_vat = billed_energy_value * VAT_RATE
                     
-                    # Αξία της ενέργειας που ΔΕΝ τιμολογήθηκε (ΚΕΡΔΟΣ)
-                    saved_energy = hidden_kwh * exact_avg_rate
+                    saved_energy = hidden_kwh * final_rate
                     saved_vat = saved_energy * VAT_RATE
                     
                     total_saved = saved_energy + saved_vat
@@ -457,7 +482,7 @@ if uploaded_file is not None:
                         <div class="hero-tags">
                             <span class="tag">⚡ Μη Τιμολογηθείσες: {hidden_kwh:.0f} kWh</span>
                             <span class="tag">💶 Αξία Καθαρής Ενέργειας: {saved_energy:.2f} €</span>
-                            <span class="tag">📊 Μέση Τιμή: {exact_avg_rate:.4f} €/kWh</span>
+                            <span class="tag">📊 Χρησιμοποιούμενη Τιμή: {final_rate:.4f} €/kWh</span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -474,12 +499,12 @@ if uploaded_file is not None:
                             <div class="vat-box">
                                 <div style="color: #F5A623; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">ΦΠΑ που Τιμολογηθηκε</div>
                                 <div style="font-size: 1.5rem; font-family: 'Fira Code', monospace; color: #F8FAFC; font-weight: 700;">{billed_vat:.2f} €</div>
-                                <div style="font-size: 0.75rem; color: #64748B; margin-top: 0.3rem;">({billed_kwh:.0f} kWh × {exact_avg_rate:.4f}€ × 6%)</div>
+                                <div style="font-size: 0.75rem; color: #64748B; margin-top: 0.3rem;">({billed_energy_value:.2f} € Καθαρή Ενέργεια × 6%)</div>
                             </div>
                             <div class="vat-box" style="border-color: #10B981; background: rgba(16, 185, 129, 0.05);">
                                 <div style="color: #10B981; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">ΦΠΑ που Γλιτωσατε (Κερδος)</div>
                                 <div style="font-size: 1.5rem; font-family: 'Fira Code', monospace; color: #10B981; font-weight: 700;">+{saved_vat:.2f} €</div>
-                                <div style="font-size: 0.75rem; color: #64748B; margin-top: 0.3rem;">({hidden_kwh:.0f} kWh × {exact_avg_rate:.4f}€ × 6%)</div>
+                                <div style="font-size: 0.75rem; color: #64748B; margin-top: 0.3rem;">({saved_energy:.2f} € Γλιτωμένη Ενέργεια × 6%)</div>
                             </div>
                         </div>
                     </div>
@@ -503,7 +528,7 @@ if uploaded_file is not None:
                         <div class="list-item" style="border-color: #F5A623;">
                             <div class="list-item-left">
                                 <div class="list-item-title">⚡ Αξία Τιμολογηθείσας Ενέργειας</div>
-                                <div class="list-item-desc">Το ποσό που τελικά χρεωθήκατε ({billed_kwh:.0f} kWh)</div>
+                                <div class="list-item-desc">Η καθαρή αξία της ενέργειας (Χωρίς Πάγια)</div>
                             </div>
                             <div class="list-item-amount text-orange">{billed_energy_value:.2f} €</div>
                         </div>
@@ -514,15 +539,14 @@ if uploaded_file is not None:
                         standard_html = ""
                         
                         if not all_charges:
-                            standard_html = "<div style='color:#94A3B8; font-size:0.9rem;'>Δεν εντοπίστηκαν ρυθμιζόμενες χρεώσεις ή φόροι.</div>"
+                            standard_html = "<div style='color:#94A3B8; font-size:0.9rem;'>Δεν εντοπίστηκαν ρυθμιζόμενες χρεώσεις.</div>"
                         else:
                             for charge_name, amount in all_charges.items():
                                 if charge_name == "Χρεώσεις Προμήθειας": continue
                                 
-                                info = CHARGE_INFO.get(charge_name, {"emoji": "📋", "desc": ""})
-                                
-                                # Αν το ποσό είναι αρνητικό (έκπτωση), το κάνουμε πράσινο. Αλλιώς άσπρο.
+                                info = CHARGE_INFO.get(charge_name, {"emoji": "📋", "desc": "Πρόσθετη Χρέωση / Έκπτωση"})
                                 amount_color = "text-green" if amount < 0 else "text-normal"
+                                sign = "+" if amount > 0 else ""
                                 
                                 standard_html += f"""
                                 <div class="list-item">
@@ -530,12 +554,12 @@ if uploaded_file is not None:
                                         <div class="list-item-title">{info['emoji']} {charge_name}</div>
                                         <div class="list-item-desc">{info['desc']}</div>
                                     </div>
-                                    <div class="list-item-amount {amount_color}">{amount:.2f} €</div>
+                                    <div class="list-item-amount {amount_color}">{sign}{amount:.2f} €</div>
                                 </div>
                                 """
                         st.markdown(standard_html, unsafe_allow_html=True)
 
-                    # --- MATH VERIFICATION (Clean Box style) ---
+                    # --- MATH VERIFICATION ---
                     st.markdown("<br><br>", unsafe_allow_html=True)
                     st.markdown('<div class="section-title">🧮 Γλωσσάρι & Υπολογισμός Ρυθμιζόμενων Χρεώσεων</div>', unsafe_allow_html=True)
 
