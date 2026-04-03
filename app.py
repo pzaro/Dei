@@ -285,7 +285,7 @@ def parse_dei_pdf(file_bytes):
                     total_tier_cost += k * r
             except ValueError: pass
 
-    # Αν η τιμολογημένη ενέργεια είναι 0 (πλήρης κάλυψη Φ/Β), βάζουμε μια μέση εκτιμώμενη τιμή (π.χ. 0.139) για να υπολογίσουμε το όφελος
+    # Αν η τιμολογημένη ενέργεια είναι 0 (πλήρης κάλυψη Φ/Β), βάζουμε μια μέση εκτιμώμενη τιμή
     exact_avg_rate = total_tier_cost / billed_kwh if billed_kwh > 0 else 0.139
     
     # --- 3. ΣΥΝΟΛΙΚΟ ΠΟΣΟ ΛΟΓΑΡΙΑΣΜΟΥ ---
@@ -460,7 +460,7 @@ if uploaded_file is not None:
                             </div>
                             <div class="list-item-amount text-orange">{billed_energy_value:.2f} €</div>
                         </div>
-                        """)
+                        """, unsafe_allow_html=True) # ΕΔΩ ΠΡΟΣΤΕΘΗΚΕ Η ΕΝΤΟΛΗ
 
                     with col_right:
                         st.markdown('<div class="section-title">🔴 Σταθερές & Ρυθμιζόμενες Χρεώσεις</div>', unsafe_allow_html=True)
@@ -528,7 +528,7 @@ if uploaded_file is not None:
 st.markdown("---")
 st.markdown("""
 <div style='text-align:center; padding: 2rem 0; color: #64748B;'>
-  <div style='font-size:0.9rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;'>Αναπτυχθηκε απο την</div>
+  <div style='font-size:0.9rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;'>Αναπτύχθηκε απο την</div>
   <div style='font-size:1.4rem; font-weight:800; color:#FFFFFF; letter-spacing: -0.5px;'>Zarkolia Health</div>
   <div style='font-size:0.9rem; margin-top: 4px;'>Πάνος Ζαρογουλίδης • Φαρμακοποιός MSc, MBA, Διαμεσολαβητής</div>
 </div>
