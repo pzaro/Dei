@@ -336,20 +336,20 @@ def parse_all_charges(text):
     patterns = [
         # ── Χρεώσεις ρεύματος (έχουν ΦΠΑ) ───────────────────────
         (r'Χρεώσεις\s+Προμήθειας\s+ΔΕΗ[^\d\n]{0,20}([\d\.,]+)', "Χρεώσεις Προμήθειας"),
-        (r'Πάγια\s+Χρέωση[^\d\n]{0,20}([\d\.,]+)',               "Πάγια Χρέωση"),
-        (r'ΑΔΜΗΕ[^\d\n]{0,50}([\d\.,]+)',                         "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
-        (r'ΔΕΔΔΗΕ[^\d\n]{0,50}([\d\.,]+)',                        "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
-        (r'ΥΚΩ[^\d\n]{0,50}([\d\.,]+)',                           "ΥΚΩ"),
-        (r'ΕΤΜΕΑΡ[^\d\n]{0,20}([\d\.,]+)',                        "ΕΤΜΕΑΡ"),
+        (r'Πάγια\s+Χρέωση[^\d\n]{0,20}([\d\.,]+)',                "Πάγια Χρέωση"),
+        (r'ΑΔΜΗΕ[^\d\n]{0,50}([\d\.,]+)',                          "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
+        (r'ΔΕΔΔΗΕ[^\d\n]{0,50}([\d\.,]+)',                         "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
+        (r'ΥΚΩ[^\d\n]{0,50}([\d\.,]+)',                            "ΥΚΩ"),
+        (r'ΕΤΜΕΑΡ[^\d\n]{0,20}([\d\.,]+)',                         "ΕΤΜΕΑΡ"),
         (r'Χρέωση\s+Χρήσης\s+Συστήματος[^\d\n]{0,20}([\d\.,]+)', "Χρέωση Χρήσης Συστήματος"),
         (r'Χρέωση\s+Χρήσης\s+Δικτύου[^\d\n]{0,20}([\d\.,]+)',    "Χρέωση Χρήσης Δικτύου"),
-        (r'Χρέωση\s+Μέτρησης[^\d\n]{0,20}([\d\.,]+)',             "Χρέωση Μέτρησης"),
-        (r'ΕΔΑΠ[^\d\n]{0,20}([\d\.,]+)',                          "ΕΔΑΠ"),
-        (r'Τέλος\s+ΑΠΕ[^\d\n]{0,20}([\d\.,]+)',                  "Τέλος ΑΠΕ"),
-        (r'Τέλος\s+Ανακύκλωσης[^\d\n]{0,20}([\d\.,]+)',          "Τέλος Ανακύκλωσης"),
+        (r'Χρέωση\s+Μέτρησης[^\d\n]{0,20}([\d\.,]+)',              "Χρέωση Μέτρησης"),
+        (r'ΕΔΑΠ[^\d\n]{0,20}([\d\.,]+)',                           "ΕΔΑΠ"),
+        (r'Τέλος\s+ΑΠΕ[^\d\n]{0,20}([\d\.,]+)',                   "Τέλος ΑΠΕ"),
+        (r'Τέλος\s+Ανακύκλωσης[^\d\n]{0,20}([\d\.,]+)',           "Τέλος Ανακύκλωσης"),
         # ── Χρεώσεις χωρίς ΦΠΑ ───────────────────────────────────
-        (r'Δήμος\b[^\d\n]{0,30}([\d\.,]+)',                       "Δήμος"),
-        (r'ΕΡΤ\b[^\d\n]{0,30}([\d\.,]+)',                         "ΕΡΤ"),
+        (r'Δήμος\b[^\d\n]{0,30}([\d\.,]+)',                        "Δήμος"),
+        (r'ΕΡΤ\b[^\d\n]{0,30}([\d\.,]+)',                          "ΕΡΤ"),
         # ΦΠΑ & ΕΦΚ υπολογίζονται — ΔΕΝ διαβάζονται από PDF
     ]
     for pattern, key in patterns:
@@ -496,16 +496,12 @@ def parse_dei_pdf(file_bytes):
     # ── 5. ΟΛΕΣ ΟΙ ΧΡΕΩΣΕΙΣ ──────────────────────────────────────
     all_charges = parse_all_charges(processed_text)
 
-    # Αν εξήχθη χρέωση ενέργειας, βεβαιωνόμαστε ότι είναι στο dict
     if energy_charge and energy_charge > 0:
         all_charges["Χρεώσεις Προμήθειας"] = energy_charge
 
-    # ΕΦΚ: υπολογίζεται από συνολικές kWh μετρητή × 0,0022
     if total_kwh and total_kwh > 0:
         all_charges["ΕΦΚ"] = round(total_kwh * 0.0022, 2)
 
-    # ΦΠΑ: διαβάζουμε απευθείας από τη γραμμή "ΦΠΑ ΡΕΥΜΑΤΟΣ XX,XX x 6% = Y,YY"
-    # Αυτή η γραμμή δίνει και τη βάση ΦΠΑ (vat_base) άρα είναι αξιόπιστη
     vat_base = None
     vat_amount = None
 
@@ -520,7 +516,6 @@ def parse_dei_pdf(file_bytes):
         except ValueError:
             pass
 
-    # Fallback: αν δεν βρέθηκε η γραμμή, υπολόγισε μόνο από Προμήθεια + Ρυθμιζόμενες
     if vat_amount is None:
         ELECTRICITY_KEYS = {
             "Χρεώσεις Προμήθειας", "Πάγια Χρέωση",
@@ -533,7 +528,6 @@ def parse_dei_pdf(file_bytes):
         vat_amount = round(vat_base * 0.06, 2)
 
     all_charges["ΦΠΑ"] = vat_amount
-    # Αποθηκεύουμε τη βάση ΦΠΑ για χρήση στο benefit_note
     all_charges["__vat_base__"] = vat_base or 0.0
 
     return total_kwh, billed_kwh, energy_charge, total_bill, exact_avg_rate, processed_text, all_charges
@@ -667,7 +661,7 @@ if uploaded_file is not None:
 """
                     st.markdown(comparison_html, unsafe_allow_html=True)
 
-                    # ── BAR CHART ΚΑΤΑΝΟΜΗ ΧΡΕΩΣΕΩΝ (native HTML) ───────────
+                    # ── BAR CHART ΚΑΤΑΝΟΜΗ ΧΡΕΩΣΕΩΝ ─────────────────────────
                     st.markdown("### 📈 Κατανομή Χρεώσεων")
                     st.markdown(
                         "🟢 Πράσινο = μειώνεται από net metering &nbsp;|&nbsp; "
@@ -703,8 +697,7 @@ if uploaded_file is not None:
 </div>"""
 
                         st.markdown(
-                            f'<div style="background:#111827; padding:20px; border-radius:14px; '
-                            f'border:1px solid #2d2d2d;">{bars_html}</div>',
+                            f'<div style="background:#111827; padding:20px; border-radius:14px; border:1px solid #2d2d2d;">{bars_html}</div>',
                             unsafe_allow_html=True
                         )
                     else:
@@ -717,7 +710,6 @@ if uploaded_file is not None:
                         "πώς υπολογίζεται και αν επηρεάζεται από το φωτοβολταϊκό σας."
                     )
 
-                    # Ομαδοποίηση κατά κατηγορία
                     categories_seen = []
                     charges_by_category = {}
                     for charge_name, amount in all_charges.items():
@@ -746,7 +738,6 @@ if uploaded_file is not None:
                                 'padding:2px 8px;font-size:0.78rem;margin-left:8px;">⚠️ ΔΕΝ μειώνεται — χρεώνεται κανονικά</span>'
                             )
 
-                            # Εξοικονόμηση ΜΟΝΟ για χρέωση Προμήθειας
                             benefit_note = ""
                             if charge_name == "Χρεώσεις Προμήθειας" and hidden_kwh and avg_rate_no_vat:
                                 benefit_note = (
@@ -793,6 +784,49 @@ if uploaded_file is not None:
 
 **✅ ΣΥΝΟΛΙΚΟ ΟΦΕΛΟΣ: {total_saved:.2f} €**
 """)
+
+                    # ── ΑΝΑΛΥΣΗ ΣΥΝΤΟΜΟΓΡΑΦΙΩΝ & ΜΑΘΗΜΑΤΙΚΗ ΕΠΑΛΗΘΕΥΣΗ ────────
+                    st.markdown("### 🔠 Γλωσσάρι Συντομογραφιών & Μαθηματική Επαλήθευση")
+                    st.markdown("Εδώ αναλύουμε τι σημαίνουν τα αρχικά που βλέπετε στον λογαριασμό σας και **πώς ακριβώς υπολογίστηκε το ποσό** βάσει της δικής σας κατανάλωσης.")
+
+                    abbreviations_info = {
+                        "ΑΔΜΗΕ: Σύστημα Μεταφοράς": ("Α.Δ.Μ.Η.Ε.", "Ανεξάρτητος Διαχειριστής Μεταφοράς Ηλεκτρικής Ενέργειας", True),
+                        "ΔΕΔΔΗΕ: Δίκτυο Διανομής": ("Δ.Ε.Δ.Δ.Η.Ε.", "Διαχειριστής Ελληνικού Δικτύου Διανομής Ηλεκτρικής Ενέργειας", True),
+                        "ΥΚΩ": ("Υ.Κ.Ω.", "Υπηρεσίες Κοινής Ωφέλειας", True),
+                        "ΕΤΜΕΑΡ": ("Ε.Τ.Μ.Ε.Α.Ρ.", "Ειδικό Τέλος Μείωσης Εκπομπών Αερίων Ρύπων", True),
+                        "ΕΦΚ": ("Ε.Φ.Κ.", "Ειδικός Φόρος Κατανάλωσης", True),
+                        "ΕΔΑΠ": ("Ε.Δ.Α.Π.", "Ειδική Διαχειριστική Αμοιβή Παραγωγής", True),
+                        "Τέλος ΑΠΕ": ("Α.Π.Ε.", "Ανανεώσιμες Πηγές Ενέργειας", True),
+                        "ΦΠΑ": ("Φ.Π.Α.", "Φόρος Προστιθέμενης Αξίας", False)
+                    }
+
+                    glossary_html = ""
+                    for dict_key, (abbr, full_name, per_kwh) in abbreviations_info.items():
+                        val = all_charges.get(dict_key)
+                        if val is not None and val > 0:
+                            if dict_key == "ΦΠΑ":
+                                math_text = f"Εφαρμόστηκε 6% επί της αξίας του ρεύματος και των ρυθμιζόμενων χρεώσεων: <br><b style='color:#7ec8e3;'>{all_charges.get('__vat_base__', 0):.2f} € × 6% = {val:.2f} €</b>"
+                            elif per_kwh and total_kwh and total_kwh > 0:
+                                rate = val / total_kwh
+                                math_text = f"Υπολογίστηκε επί της συνολικής κατανάλωσης του μετρητή (ανεξάρτητα από το Φ/Β): <br><b style='color:#7ec8e3;'>{total_kwh:.0f} kWh × {rate:.5f} €/kWh = {val:.2f} €</b>"
+                            else:
+                                math_text = f"Χρεώθηκε το ποσό των <b style='color:#7ec8e3;'>{val:.2f} €</b>."
+
+                            glossary_html += f"""
+                            <div style="background:#111827; border-left:4px solid #F5A623; padding:12px 16px; margin-bottom:12px; border-radius:8px; border:1px solid #2d2d2d;">
+                                <div style="font-size:1.1em; font-weight:700; color:#F5A623; margin-bottom:4px;">
+                                    {abbr} <span style="font-size:0.85em; color:#888; font-weight:400;">({full_name})</span>
+                                </div>
+                                <div style="font-size:0.95em; color:#ddd; line-height: 1.5;">
+                                    🧮 <i>Πώς υπολογίστηκε:</i> {math_text}
+                                </div>
+                            </div>
+                            """
+                    
+                    if glossary_html:
+                        st.markdown(glossary_html, unsafe_allow_html=True)
+                    else:
+                        st.info("Δεν εντοπίστηκαν ειδικές συντομογραφίες στον συγκεκριμένο λογαριασμό.")
 
         except Exception as e:
             st.error(f"❌ Σφάλμα κατά την ανάλυση: {e}")
