@@ -25,235 +25,100 @@ html, body, [class*="css"] {
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 
-/* Typography */
-.app-header {
-    text-align: center;
-    padding: 2rem 0 2rem 0;
-}
+.app-header { text-align: center; padding: 2rem 0 2rem 0; }
 .app-title {
-    font-size: 2.8rem;
-    font-weight: 800;
-    letter-spacing: -1px;
+    font-size: 2.8rem; font-weight: 800; letter-spacing: -1px;
     background: linear-gradient(90deg, #38BDF8, #818CF8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     margin-bottom: 0.5rem;
 }
-.app-subtitle {
-    font-size: 1.1rem;
-    color: #94A3B8;
-    font-weight: 400;
-}
+.app-subtitle { font-size: 1.1rem; color: #94A3B8; font-weight: 400; }
 
-/* User Input Box */
 .input-container {
-    background: #1E293B;
-    border: 1px solid #3B82F6;
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+    background: #1E293B; border: 1px solid #3B82F6; border-radius: 16px;
+    padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
 }
 
-/* Metric Cards */
-.metric-row {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-}
+.metric-row { display: flex; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
 .metric-card {
-    flex: 1;
-    min-width: 200px;
-    background: #1E293B;
-    border: 1px solid #334155;
-    border-radius: 16px;
-    padding: 1.5rem;
-    transition: transform 0.2s ease;
+    flex: 1; min-width: 200px; background: #1E293B; border: 1px solid #334155;
+    border-radius: 16px; padding: 1.5rem; transition: transform 0.2s ease;
 }
-.metric-card:hover {
-    transform: translateY(-2px);
-    border-color: #475569;
-}
-.metric-label {
-    font-size: 0.85rem;
-    color: #94A3B8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-.metric-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #F8FAFC;
-    font-family: 'Fira Code', monospace;
-}
+.metric-card:hover { transform: translateY(-2px); border-color: #475569; }
+.metric-label { font-size: 0.85rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.5rem; }
+.metric-value { font-size: 1.8rem; font-weight: 700; color: #F8FAFC; font-family: 'Fira Code', monospace; }
 .text-green { color: #10B981 !important; }
 .text-blue { color: #38BDF8 !important; }
 .text-orange { color: #F5A623 !important; }
-.text-red { color: #EF4444 !important; }
 
-/* The Hero Savings Card */
 .hero-card {
     background: linear-gradient(145deg, #064E3B 0%, #022C22 100%);
-    border: 1px solid #047857;
-    border-radius: 24px;
-    padding: 3rem 2rem;
-    text-align: center;
-    margin-bottom: 3rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    border: 1px solid #047857; border-radius: 24px; padding: 3rem 2rem;
+    text-align: center; margin-bottom: 3rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
 }
-.hero-label {
-    font-size: 1.1rem;
-    color: #A7F3D0;
-    font-weight: 500;
-    margin-bottom: 1rem;
-}
-.hero-amount {
-    font-size: 4.5rem;
-    font-weight: 800;
-    color: #10B981;
-    line-height: 1;
-    letter-spacing: -2px;
-    margin-bottom: 1.5rem;
-    font-family: 'Fira Code', monospace;
-}
-.hero-tags {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
+.hero-label { font-size: 1.1rem; color: #A7F3D0; font-weight: 500; margin-bottom: 1rem; }
+.hero-amount { font-size: 4.5rem; font-weight: 800; color: #10B981; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; font-family: 'Fira Code', monospace; }
+.hero-tags { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
 .tag {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    color: #6EE7B7;
-    padding: 0.5rem 1rem;
-    border-radius: 99px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #6EE7B7; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.9rem; font-weight: 500;
 }
 
-/* Clean List Cards for Charges */
-.section-title {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #FFFFFF;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #334155;
-}
-.list-item {
-    background: #1E293B;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    padding: 1.2rem;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.list-item-left {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-}
-.list-item-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #E2E8F0;
-}
-.list-item-desc {
-    font-size: 0.8rem;
-    color: #64748B;
-}
-.list-item-amount {
-    font-size: 1.2rem;
-    font-weight: 700;
-    font-family: 'Fira Code', monospace;
-}
+.section-title { font-size: 1.2rem; font-weight: 700; color: #FFFFFF; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #334155; }
+.list-item { background: #1E293B; border: 1px solid #334155; border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+.list-item-left { display: flex; flex-direction: column; gap: 0.2rem; }
+.list-item-title { font-size: 1rem; font-weight: 600; color: #E2E8F0; }
+.list-item-desc { font-size: 0.8rem; color: #64748B; }
+.list-item-amount { font-size: 1.2rem; font-weight: 700; font-family: 'Fira Code', monospace; }
+.text-normal { color: #F8FAFC; }
 
-/* Math Box */
-.math-container {
-    background: #0F172A;
-    border: 1px solid #1E293B;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    border-left: 4px solid #38BDF8;
-}
-.math-header {
-    font-weight: 700;
-    color: #38BDF8;
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.math-body {
-    color: #94A3B8;
-    font-size: 0.9rem;
-    line-height: 1.6;
-}
-.math-formula {
-    background: #1E293B;
-    padding: 0.75rem;
-    border-radius: 8px;
-    font-family: 'Fira Code', monospace;
-    color: #E2E8F0;
-    margin-top: 0.75rem;
-    border: 1px solid #334155;
-    font-weight: 600;
-}
+.math-container { background: #0F172A; border: 1px solid #1E293B; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; border-left: 4px solid #38BDF8; }
+.math-header { font-weight: 700; color: #38BDF8; font-size: 1.1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px; }
+.math-body { color: #94A3B8; font-size: 0.9rem; line-height: 1.6; }
+.math-formula { background: #1E293B; padding: 0.75rem; border-radius: 8px; font-family: 'Fira Code', monospace; color: #E2E8F0; margin-top: 0.75rem; border: 1px solid #334155; font-weight: 600; }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────
-# ΒΙΒΛΙΟΘΗΚΗ ΕΞΗΓΗΣΕΩΝ & ΤΥΠΩΝ
+# ΒΙΒΛΙΟΘΗΚΗ ΕΞΗΓΗΣΕΩΝ ΧΡΕΩΣΕΩΝ
 # ─────────────────────────────────────────────────────────────────
 CHARGE_INFO = {
-    "Χρεώσεις Προμήθειας": {"emoji": "⚡", "desc": "Το κόστος ρεύματος της ΔΕΗ.", "type": "energy"},
+    "Χρεώσεις Προμήθειας": {"emoji": "⚡", "desc": "Το συνολικό κόστος προμήθειας ρεύματος.", "type": "energy"},
+    "Χρέωση Ενέργειας Κανονική": {"emoji": "⚡", "desc": "Αξία ρεύματος Ημέρας.", "type": "energy"},
+    "Χρέωση Ενέργειας Μειωμένη": {"emoji": "⚡", "desc": "Αξία ρεύματος Νύχτας.", "type": "energy"},
     "Πάγια Χρέωση": {"emoji": "📋", "desc": "Σταθερό μηνιαίο πάγιο βάσει συμβολαίου.", "type": "fixed"},
-    "Μηχανισμός Διακύμανσης": {"emoji": "📈", "desc": "Χρέωση/Πίστωση βάσει Χρηματιστηρίου Ενέργειας.", "type": "energy"},
-    "ΑΔΜΗΕ: Σύστημα Μεταφοράς": {"emoji": "🔌", "desc": "Δίκτυο Υψηλής Τάσης.", "type": "per_kwh"},
-    "ΔΕΔΔΗΕ: Δίκτυο Διανομής": {"emoji": "🔌", "desc": "Δίκτυο Μέσης/Χαμηλής Τάσης.", "type": "per_kwh"},
+    "Μηχανισμός Διακύμανσης": {"emoji": "📈", "desc": "Χρέωση/Πίστωση βάσει Χρηματιστηρίου Ενέργειας (ΤΕΑ).", "type": "energy"},
+    "ΑΔΜΗΕ: Σύστημα Μεταφοράς": {"emoji": "🔌", "desc": "Δίκτυο Υψηλής Τάσης. Περιλαμβάνει πάγιο ισχύος (kVA) και χρέωση ανά kWh.", "type": "per_kwh"},
+    "ΔΕΔΔΗΕ: Δίκτυο Διανομής": {"emoji": "🔌", "desc": "Δίκτυο Μέσης/Χαμηλής Τάσης. Περιλαμβάνει πάγιο ισχύος (kVA) και χρέωση ανά kWh.", "type": "per_kwh"},
     "ΥΚΩ": {"emoji": "🏝️", "desc": "Υπηρεσίες Κοινής Ωφέλειας (Επιδότηση νησιών, ΚΟΤ).", "type": "per_kwh"},
-    "ΕΤΜΕΑΡ": {"emoji": "🌱", "desc": "Ειδικό Τέλος Μείωσης Εκπομπών Αερίων Ρύπων.", "type": "per_kwh"},
-    "Χρέωση Μέτρησης": {"emoji": "📟", "desc": "Πάγιο συντήρησης μετρητή.", "type": "fixed"},
-    "ΕΦΚ": {"emoji": "🏛️", "desc": "Ειδικός Φόρος Κατανάλωσης (0,0022€ ανά kWh).", "type": "per_kwh"},
-    "Ειδικό Τέλος 5‰": {"emoji": "🏛️", "desc": "Ειδικό Τέλος 5/1000 (Ν.2093/92).", "type": "percentage_5"},
+    "ΕΤΜΕΑΡ": {"emoji": "🌱", "desc": "Ειδικό Τέλος Μείωσης Εκπομπών Αερίων Ρύπων. Υποστηρίζει την πράσινη ενέργεια.", "type": "per_kwh"},
+    "Χρέωση Μέτρησης": {"emoji": "📟", "desc": "Πάγιο για τη συντήρηση και καταμέτρηση του μετρητή.", "type": "fixed"},
+    "ΕΦΚ": {"emoji": "🏛️", "desc": "Ειδικός Φόρος Κατανάλωσης. Σταθερός φόρος 0,0022€ ανά kWh.", "type": "per_kwh"},
+    "Ειδικό Τέλος 5‰": {"emoji": "🏛️", "desc": "Ειδικό Τέλος 5/1000 (Ν.2093/92). 0,5% επί της Προμήθειας, Ρυθμιζόμενων και ΕΦΚ.", "type": "percentage_5"},
     "ΦΠΑ": {"emoji": "🧾", "desc": "Φόρος Προστιθέμενης Αξίας (6%).", "type": "percentage_6"},
     "Τέλος Ανακύκλωσης": {"emoji": "♻️", "desc": "Τέλος υπέρ ανακύκλωσης συσκευών.", "type": "fixed"},
-    "Δημοτικά Τέλη (ΔΤ)": {"emoji": "🗑️", "desc": "Ανταποδοτικά τέλη καθαριότητας & φωτισμού.", "type": "municipal"},
-    "Δημοτικός Φόρος (ΔΦ)": {"emoji": "🏛️", "desc": "Φόρος ηλεκτροδοτούμενων χώρων.", "type": "municipal"},
-    "ΤΑΠ": {"emoji": "🏠", "desc": "Τέλος Ακίνητης Περιουσίας.", "type": "municipal"},
+    "Δημοτικά Τέλη (ΔΤ)": {"emoji": "🗑️", "desc": "Ανταποδοτικά τέλη καθαριότητας & φωτισμού Δήμου. Υπολογίζεται βάσει τ.μ. ακινήτου.", "type": "municipal"},
+    "Δημοτικός Φόρος (ΔΦ)": {"emoji": "🏛️", "desc": "Φόρος ηλεκτροδοτούμενων χώρων. Υπολογίζεται βάσει τ.μ.", "type": "municipal"},
+    "ΤΑΠ": {"emoji": "🏠", "desc": "Τέλος Ακίνητης Περιουσίας. Υπολογίζεται βάσει τ.μ., παλαιότητας και Τιμής Ζώνης.", "type": "municipal"},
     "ΕΡΤ": {"emoji": "📺", "desc": "Ανταποδοτικό Τέλος ΕΡΤ (Σταθερό 3€/μήνα).", "type": "ert"},
-    "Έκπτ. Πάγιας Εντολής": {"emoji": "🏷️", "desc": "Έκπτωση πάγιας εντολής.", "type": "discount"},
-    "GreenPass": {"emoji": "🌿", "desc": "Πιστοποιητικό Πράσινης Ενέργειας.", "type": "fixed"},
-    "Έκπτωση Σταθμών ΑΠΕ": {"emoji": "☀️", "desc": "Έκπτωση (1%) λόγω γειτνίασης με ΑΠΕ.", "type": "discount"},
+    "Έκπτ. Πάγιας Εντολής": {"emoji": "🏷️", "desc": "Έκπτωση συνήθως 2% επειδή πληρώνετε μέσω κάρτας/τράπεζας.", "type": "discount"},
+    "GreenPass": {"emoji": "🌿", "desc": "Πιστοποιητικό Εγγύησης Προέλευσης (Πράσινη Ενέργεια).", "type": "fixed"},
+    "Έκπτωση Σταθμών ΑΠΕ": {"emoji": "☀️", "desc": "Έκπτωση (1%) γιατί κοντά σας λειτουργούν σταθμοί ΑΠΕ.", "type": "discount"},
     "Επιδότηση / ΤΕΜ": {"emoji": "🎁", "desc": "Κρατική Επιδότηση (Ταμείο Ενεργειακής Μετάβασης).", "type": "discount"},
-    "Επιβράβευση Αντλ. Θερμ": {"emoji": "🎁", "desc": "Ειδική επιβράβευση χρήσης Αντλίας Θερμότητας.", "type": "discount"},
-    "Στρογγυλοποίηση": {"emoji": "⚖️", "desc": "Στρογγυλοποίηση τρέχοντος λογαριασμού.", "type": "fixed"},
-    "Στρογγυλοποίηση Προηγ. Λογαριασμού": {"emoji": "⚖️", "desc": "Στρογγυλοποίηση προηγούμενου λογαριασμού.", "type": "fixed"},
+    "Στρογγυλοποίηση": {"emoji": "⚖️", "desc": "Στρογγυλοποίηση ποσού.", "type": "fixed"},
+    "Επιβράβευση Αντλ. Θερμ": {"emoji": "🎁", "desc": "Επιβράβευση Αντλίας Θερμότητας", "type": "discount"},
 }
 
 # ─────────────────────────────────────────────────────────────────
 # ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ
 # ─────────────────────────────────────────────────────────────────
 def clean_number(s):
-    """Καθαρίζει τα νούμερα, αντιμετωπίζοντας σωστά τα αρνητικά πρόσημα."""
     s = s.strip()
     is_negative = False
     if s.startswith('-'):
         is_negative = True
         s = s[1:].strip()
-    if s.endswith('-'):
-        is_negative = True
-        s = s[:-1].strip()
-        
     if '.' in s and ',' in s: 
         s = s.replace('.', '').replace(',', '.')
     elif '.' in s and ',' not in s:
@@ -261,7 +126,6 @@ def clean_number(s):
         if len(parts) == 2 and len(parts[1]) == 3: s = s.replace('.', '')
     elif ',' in s and '.' not in s: 
         s = s.replace(',', '.')
-        
     try:
         val = float(s)
         return -val if is_negative else val
@@ -269,7 +133,6 @@ def clean_number(s):
         return 0.0
 
 def get_tariff_rates(text):
-    """Ανιχνεύει αυτόματα τις τιμές Ημέρας και Νύχτας από το όνομα του τιμολογίου στο PDF."""
     t = text.lower()
     if "myhome enter two" in t: return 0.145, 0.095
     if "myhome enter" in t: return 0.145, 0.145
@@ -287,11 +150,12 @@ def parse_dei_pdf(file_bytes):
 
     processed_text = text.replace("Bkwh", "8kWh").replace("B kwh", "8 kWh").replace("awn", "kWh")
 
-    # Ανίχνευση Προεπιλεγμένων Τιμών
     detected_day_rate, detected_night_rate = get_tariff_rates(processed_text)
 
-    # 1. ΕΝΔΕΙΞΕΙΣ ΜΕΤΡΗΤΗ (Ημέρας / Νύχτας)
-    day_kwh, night_kwh = 0.0, 0.0
+    # 1. ΕΝΔΕΙΞΕΙΣ ΜΕΤΡΗΤΗ (Ημέρα & Νύχτα)
+    day_kwh = 0.0
+    night_kwh = 0.0
+    
     meter_11 = re.findall(r'T\d+\s+11\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)', processed_text)
     meter_12 = re.findall(r'T\d+\s+12\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)', processed_text)
     
@@ -303,7 +167,7 @@ def parse_dei_pdf(file_bytes):
         match = re.search(r'Κατανάλωση Ηλεκτρικής Ενέργειας\s+([\d\.,]+)\s*kWh', processed_text, re.IGNORECASE)
         if match: 
             total_kwh = clean_number(match.group(1))
-            day_kwh = total_kwh
+            day_kwh = total_kwh 
 
     # 2. ΣΥΝΟΛΙΚΟ ΠΟΣΟ
     total_bill = 0.0
@@ -317,6 +181,8 @@ def parse_dei_pdf(file_bytes):
     all_charges = {}
     patterns = [
         (r'Χρεώσεις\s+Προμήθειας\s+ΔΕΗ[^\n]*', "Χρεώσεις Προμήθειας"),
+        (r'Χρέωση\s*Ενέργειας\s*Κανονική[^\n]*', "Χρέωση Ενέργειας Κανονική"),
+        (r'Χρέωση\s*Ενέργειας\s*Μειωμένη[^\n]*', "Χρέωση Ενέργειας Μειωμένη"),
         (r'Πάγια\s+Χρέωση[^\n]*', "Πάγια Χρέωση"),
         (r'Μηχανισμός\s+Διακύμανσης[^\n]*', "Μηχανισμός Διακύμανσης"),
         (r'Έκπτ\.?\s*πάγιας\s+εντολής[^\n]*', "Έκπτ. Πάγιας Εντολής"),
@@ -335,13 +201,14 @@ def parse_dei_pdf(file_bytes):
         (r'Επιβράβευση(?!\s+Αντλ)[^\n]*', "Επιδότηση / ΤΕΜ"),
         (r'Πιστώσεις\s+ΤΕΜ[^\n]*', "Επιδότηση / ΤΕΜ"),
         (r'Στρογγ/ση\s+Πληρ\.\s+Ποσού[^\n]*', "Στρογγυλοποίηση"),
-        (r'Ποσό\s+Στρογγ\.?Προηγ\.?Λογ\.[^\n]*', "Στρογγυλοποίηση Προηγ. Λογαριασμού"),
+        (r'Ποσό\s+Στρογγ\.?Προηγ\.?Λογ\.[^\n]*', "Στρογγυλοποίηση"),
     ]
     
     for pattern, key in patterns:
         matches = re.finditer(pattern, processed_text, re.IGNORECASE)
         for match in matches:
             line_text = match.group(0)
+            if key == "Επιβράβευση / ΤΕΜ" and "Αντλ" in line_text: continue 
             numbers = re.findall(r'-?\d+(?:[\.,]\d+)?', line_text)
             if numbers:
                 val = clean_number(numbers[-1])
@@ -372,28 +239,40 @@ def parse_dei_pdf(file_bytes):
     match_tap = re.search(r'ΤΑΠ[^\n]*?=\s*([\d\.,]+)', processed_text)
     if match_tap: all_charges["ΤΑΠ"] = clean_number(match_tap.group(1))
 
-    # 5. KWH ΚΑΙ ΚΑΘΑΡΗ ΑΞΙΑ ΕΝΕΡΓΕΙΑΣ
+    # 5. KWH ΚΑΙ ΤΙΜΗ (Τιμολογηθείσα Ενέργεια)
     billed_kwh = 0.0
+    exact_avg_rate = None
+    
     supply_section = re.search(r'(?:Χρεώσεις Προμήθειας|Αναλυτικά οι χρεώσεις)(.*?)(?:Ρυθμιζόμενες Χρεώσεις|Έναντι Κατανάλωσης)', processed_text, re.IGNORECASE | re.DOTALL)
     if supply_section:
         for m in re.finditer(r'(\d+(?:[\.,]\d+)?)\s*[kK][wW][hH]\s*[xX×]\s*([\d,\.]+)', supply_section.group(1), re.IGNORECASE):
             try:
                 k, r = float(m.group(1)), clean_number(m.group(2))
-                if r >= 0.001: billed_kwh += k
+                if r >= 0.001: 
+                    billed_kwh += k
+                    exact_avg_rate = r
             except ValueError: pass
 
-    # Καθαρή Αξία: Το συνολικό ποσό μείον τα πάγια/σταθερά του ίδιου πίνακα
-    total_prom = all_charges.get("Χρεώσεις Προμήθειας", 0.0)
-    pagia = all_charges.get("Πάγια Χρέωση", 0.0)
-    ekpt_pagias = all_charges.get("Έκπτ. Πάγιας Εντολής", 0.0)
-    greenpass = all_charges.get("GreenPass", 0.0)
+    # Απευθείας εύρεση Καθαρής Ενέργειας 
+    explicit_energy = all_charges.get("Χρέωση Ενέργειας Κανονική", 0.0) + all_charges.get("Χρέωση Ενέργειας Μειωμένη", 0.0)
+    explicit_energy = round(explicit_energy, 2)
     
-    pure_energy_cost = round(total_prom - pagia - ekpt_pagias - greenpass, 2)
-    if pure_energy_cost <= 0: 
-        pure_energy_cost = 0.0
-        billed_kwh = 0.0
-    elif billed_kwh == 0:
-        billed_kwh = total_kwh
+    if explicit_energy > 0:
+        pure_energy_cost = explicit_energy
+    else:
+        # Fallback αφαίρεσης παγίων εάν δεν υπάρχει αναλυτική χρέωση
+        total_prom = all_charges.get("Χρεώσεις Προμήθειας", 0.0)
+        pagia = all_charges.get("Πάγια Χρέωση", 0.0)
+        ekpt_pagias = all_charges.get("Έκπτ. Πάγιας Εντολής", 0.0)
+        greenpass = all_charges.get("GreenPass", 0.0)
+        
+        pure_energy_cost = round(total_prom - pagia - ekpt_pagias - greenpass, 2)
+        if pure_energy_cost <= 0: pure_energy_cost = 0.0
+
+    # Έξυπνη διόρθωση Billed kWh εάν το OCR απέτυχε στα νούμερα
+    if pure_energy_cost > 0 and billed_kwh == 0:
+        rate_to_use = exact_avg_rate if exact_avg_rate else detected_day_rate
+        billed_kwh = round(pure_energy_cost / rate_to_use)
 
     return total_kwh, day_kwh, night_kwh, billed_kwh, pure_energy_cost, total_bill, detected_day_rate, detected_night_rate, all_charges
 
@@ -406,7 +285,21 @@ st.markdown('<div class="app-title">Net Metering Analytics</div>', unsafe_allow_
 st.markdown('<div class="app-subtitle">Ολοκληρωμένη Ανάλυση Ενέργειας, Κερδών και Μαθηματική Επαλήθευση Λογαριασμού ΔΕΗ</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("📄 Ανεβάστε το PDF του λογαριασμού σας", type="pdf")
+col_upload, col_input1, col_input2 = st.columns([2, 1, 1], gap="large")
+
+with col_upload:
+    uploaded_file = st.file_uploader("📄 Ανεβάστε το PDF του λογαριασμού σας", type="pdf")
+
+with col_input1:
+    st.markdown('<div class="input-container">', unsafe_allow_html=True)
+    user_day_rate = st.number_input("☀️ Τιμή Ημέρας (€/kWh)", value=0.1450, format="%.4f", help="Εισάγετε τη χρέωση Κανονικής Ζώνης βάσει συμβολαίου. Προσαρμόζεται αυτόματα ανάλογα με το τιμολόγιο που ανεβάζετε.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col_input2:
+    st.markdown('<div class="input-container">', unsafe_allow_html=True)
+    user_night_rate = st.number_input("🌙 Τιμή Νύχτας (€/kWh)", value=0.0950, format="%.4f", help="Εισάγετε τη χρέωση Μειωμένης Ζώνης βάσει συμβολαίου (αν έχετε νυχτερινό).")
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 if uploaded_file is not None:
     file_bytes = uploaded_file.read()
@@ -419,17 +312,7 @@ if uploaded_file is not None:
             if not total_kwh and not total_bill:
                 st.error("Δεν ήταν δυνατή η ανάγνωση των Ενδείξεων. Ελέγξτε αν το αρχείο είναι έγκυρο PDF της ΔΕΗ.")
             else:
-                # Εμφάνιση πεδίων εισαγωγής ΜΕΤΑ την ανίχνευση του PDF
-                col_input1, col_input2 = st.columns(2, gap="large")
-                with col_input1:
-                    st.markdown('<div class="input-container">', unsafe_allow_html=True)
-                    user_day_rate = st.number_input("☀️ Τιμή Ημέρας (€/kWh) - Ανιχνεύτηκε Αυτόματα:", value=detected_day_rate, format="%.4f")
-                    st.markdown('</div>', unsafe_allow_html=True)
-                with col_input2:
-                    st.markdown('<div class="input-container">', unsafe_allow_html=True)
-                    user_night_rate = st.number_input("🌙 Τιμή Νύχτας (€/kWh) - Ανιχνεύτηκε Αυτόματα:", value=detected_night_rate, format="%.4f")
-                    st.markdown('</div>', unsafe_allow_html=True)
-
+                # Χρησιμοποιούμε τις τιμές του χρήστη (οι οποίες μπορούν να τροποποιηθούν στο UI)
                 hidden_kwh = max(0.0, total_kwh - billed_kwh)
 
                 VAT_RATE = 0.06
@@ -495,7 +378,7 @@ if uploaded_file is not None:
                     <div class="list-item" style="border-color: #10B981;">
                         <div class="list-item-left">
                             <div class="list-item-title">⚡ Αξία Μη Τιμολογηθείσας Ενέργειας</div>
-                            <div class="list-item-desc">Το ποσό που θα πληρώνατε χωρίς το Φ/Β</div>
+                            <div class="list-item-desc">Το ποσό του ρεύματος που γλιτώσατε λόγω Φ/Β</div>
                         </div>
                         <div class="list-item-amount text-green">{saved_energy:.2f} €</div>
                     </div>
@@ -513,7 +396,9 @@ if uploaded_file is not None:
                     standard_html = ""
                     
                     for charge_name, amount in all_charges.items():
-                        if charge_name == "Χρεώσεις Προμήθειας" or charge_name.startswith("__") or amount == 0: continue
+                        if charge_name in ["Χρεώσεις Προμήθειας", "Χρέωση Ενέργειας Κανονική", "Χρέωση Ενέργειας Μειωμένη"] or charge_name.startswith("__") or amount == 0: 
+                            continue
+                            
                         info = CHARGE_INFO.get(charge_name, {"emoji": "📋", "desc": "Πρόσθετη Χρέωση"})
                         amount_color = "text-green" if amount < 0 else "text-normal"
                         sign = "+" if amount > 0 else ""
@@ -568,6 +453,10 @@ if uploaded_file is not None:
                         formula = f"3,00 € / μήνα × Ημέρες λογαριασμού"
                         text = "Το ανταποδοτικό τέλος της ΕΡΤ είναι σταθερό στα 3€ το μήνα. Το ποσό προσαρμόζεται ανάλογα με το πόσες μέρες αφορά ο λογαριασμός σας."
                         
+                    elif c_type == "energy":
+                        formula = f"Τιμολογηθείσες kWh × Τιμή ρεύματος"
+                        text = "Η καθαρή αξία της ενέργειας που τραβήξατε από το δίκτυο (χωρίς πάγια και φόρους)."
+
                     elif c_type == "discount" or val < 0:
                         formula = f"{val:.2f} €"
                         text = "Πρόκειται για έκπτωση (αρνητικό πρόσημο) που αφαιρείται απευθείας από το τελικό ποσό του λογαριασμού σας."
