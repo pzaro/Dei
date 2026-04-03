@@ -334,24 +334,31 @@ def parse_all_charges(text):
     """Εξάγει όλες τις γραμμές χρεώσεων από το κείμενο."""
     charges = {}
     patterns = [
-        (r'(ΕΤΜΕΑΡ)[^\d]+([\d\.,]+)\s*€?', "ΕΤΜΕΑΡ"),
-        (r'(ΥΚΩ)[^\d]+([\d\.,]+)\s*€?', "ΥΚΩ"),
-        (r'(ΦΠΑ\s+\d+%?)[^\d]+([\d\.,]+)\s*€?', "ΦΠΑ"),
-        # ΕΦΚ υπολογίζεται από kWh — ΔΕΝ διαβάζεται από PDF
-        (r'(Πάγια\s+Χρέωση)[^\d]+([\d\.,]+)\s*€?', "Πάγια Χρέωση"),
-        (r'(Χρέωση\s+Χρήσης\s+Συστήματος)[^\d]+([\d\.,]+)\s*€?', "Χρέωση Χρήσης Συστήματος"),
-        (r'(Χρέωση\s+Χρήσης\s+Δικτύου)[^\d]+([\d\.,]+)\s*€?', "Χρέωση Χρήσης Δικτύου"),
-        (r'(Χρέωση\s+Μέτρησης)[^\d]+([\d\.,]+)\s*€?', "Χρέωση Μέτρησης"),
-        (r'(Τέλος\s+Ανακύκλωσης)[^\d]+([\d\.,]+)\s*€?', "Τέλος Ανακύκλωσης"),
-        (r'(Χρεώσεις\s+Προμήθειας\s+ΔΕΗ)[^\d]+([\d\.,]+)\s*€?', "Χρεώσεις Προμήθειας"),
-        (r'(ΕΔΑΠ)[^\d]+([\d\.,]+)\s*€?', "ΕΔΑΠ"),
-        (r'(Τέλος\s+ΑΠΕ)[^\d]+([\d\.,]+)\s*€?', "Τέλος ΑΠΕ"),
+        # ── Χρεώσεις ρεύματος (έχουν ΦΠΑ) ───────────────────────
+        (r'Χρεώσεις\s+Προμήθειας\s+ΔΕΗ[^\d\n]{0,20}([\d\.,]+)', "Χρεώσεις Προμήθειας"),
+        (r'Πάγια\s+Χρέωση[^\d\n]{0,20}([\d\.,]+)',               "Πάγια Χρέωση"),
+        (r'ΑΔΜΗΕ[^\d\n]{0,50}([\d\.,]+)',                         "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
+        (r'ΔΕΔΔΗΕ[^\d\n]{0,50}([\d\.,]+)',                        "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
+        (r'ΥΚΩ[^\d\n]{0,50}([\d\.,]+)',                           "ΥΚΩ"),
+        (r'ΕΤΜΕΑΡ[^\d\n]{0,20}([\d\.,]+)',                        "ΕΤΜΕΑΡ"),
+        (r'Χρέωση\s+Χρήσης\s+Συστήματος[^\d\n]{0,20}([\d\.,]+)', "Χρέωση Χρήσης Συστήματος"),
+        (r'Χρέωση\s+Χρήσης\s+Δικτύου[^\d\n]{0,20}([\d\.,]+)',    "Χρέωση Χρήσης Δικτύου"),
+        (r'Χρέωση\s+Μέτρησης[^\d\n]{0,20}([\d\.,]+)',             "Χρέωση Μέτρησης"),
+        (r'ΕΔΑΠ[^\d\n]{0,20}([\d\.,]+)',                          "ΕΔΑΠ"),
+        (r'Τέλος\s+ΑΠΕ[^\d\n]{0,20}([\d\.,]+)',                  "Τέλος ΑΠΕ"),
+        (r'Τέλος\s+Ανακύκλωσης[^\d\n]{0,20}([\d\.,]+)',          "Τέλος Ανακύκλωσης"),
+        # ── Χρεώσεις χωρίς ΦΠΑ ───────────────────────────────────
+        (r'Δήμος\b[^\d\n]{0,30}([\d\.,]+)',                       "Δήμος"),
+        (r'ΕΡΤ\b[^\d\n]{0,30}([\d\.,]+)',                         "ΕΡΤ"),
+        # ΦΠΑ & ΕΦΚ υπολογίζονται — ΔΕΝ διαβάζονται από PDF
     ]
     for pattern, key in patterns:
+        if key in charges:
+            continue
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             try:
-                val = clean_number(match.group(2))
+                val = clean_number(match.group(1))
                 if val > 0:
                     charges[key] = val
             except ValueError:
@@ -493,9 +500,41 @@ def parse_dei_pdf(file_bytes):
     if energy_charge and energy_charge > 0:
         all_charges["Χρεώσεις Προμήθειας"] = energy_charge
 
-    # ΕΦΚ: υπολογίζεται πάντα από συνολικές kWh μετρητή × 0,0022
+    # ΕΦΚ: υπολογίζεται από συνολικές kWh μετρητή × 0,0022
     if total_kwh and total_kwh > 0:
         all_charges["ΕΦΚ"] = round(total_kwh * 0.0022, 2)
+
+    # ΦΠΑ: διαβάζουμε απευθείας από τη γραμμή "ΦΠΑ ΡΕΥΜΑΤΟΣ XX,XX x 6% = Y,YY"
+    # Αυτή η γραμμή δίνει και τη βάση ΦΠΑ (vat_base) άρα είναι αξιόπιστη
+    vat_base = None
+    vat_amount = None
+
+    m_vat = re.search(
+        r'ΦΠΑ\s+ΡΕΥΜΑΤΟΣ\s+([\d\.,]+)\s*[xX×]\s*6%\s*=\s*([\d\.,]+)',
+        processed_text, re.IGNORECASE
+    )
+    if m_vat:
+        try:
+            vat_base   = clean_number(m_vat.group(1))
+            vat_amount = clean_number(m_vat.group(2))
+        except ValueError:
+            pass
+
+    # Fallback: αν δεν βρέθηκε η γραμμή, υπολόγισε μόνο από Προμήθεια + Ρυθμιζόμενες
+    if vat_amount is None:
+        ELECTRICITY_KEYS = {
+            "Χρεώσεις Προμήθειας", "Πάγια Χρέωση",
+            "ΑΔΜΗΕ: Σύστημα Μεταφοράς", "ΔΕΔΔΗΕ: Δίκτυο Διανομής",
+            "Χρέωση Χρήσης Συστήματος", "Χρέωση Χρήσης Δικτύου",
+            "ΥΚΩ", "ΕΤΜΕΑΡ", "ΕΦΚ", "ΕΔΑΠ", "Τέλος ΑΠΕ",
+            "Χρέωση Μέτρησης", "Τέλος Ανακύκλωσης",
+        }
+        vat_base   = sum(v for k, v in all_charges.items() if k in ELECTRICITY_KEYS)
+        vat_amount = round(vat_base * 0.06, 2)
+
+    all_charges["ΦΠΑ"] = vat_amount
+    # Αποθηκεύουμε τη βάση ΦΠΑ για χρήση στο benefit_note
+    all_charges["__vat_base__"] = vat_base or 0.0
 
     return total_kwh, billed_kwh, energy_charge, total_bill, exact_avg_rate, processed_text, all_charges
 
@@ -637,7 +676,10 @@ if uploaded_file is not None:
                     )
 
                     if all_charges:
-                        sorted_charges = sorted(all_charges.items(), key=lambda x: x[1], reverse=True)
+                        sorted_charges = sorted(
+                            [(k, v) for k, v in all_charges.items() if not k.startswith("__")],
+                            key=lambda x: x[1], reverse=True
+                        )
                         max_val = max(v for _, v in sorted_charges) if sorted_charges else 1
 
                         bars_html = ""
@@ -679,6 +721,8 @@ if uploaded_file is not None:
                     categories_seen = []
                     charges_by_category = {}
                     for charge_name, amount in all_charges.items():
+                        if charge_name.startswith("__"):
+                            continue
                         info = CHARGE_INFO.get(charge_name, {
                             "category": "📋 Λοιπές Χρεώσεις",
                             "emoji": "📋",
