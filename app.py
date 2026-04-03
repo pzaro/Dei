@@ -267,7 +267,6 @@ def parse_dei_pdf(file_bytes):
     if meter_totals:
         total_kwh = sum(float(x) for x in meter_totals)
     else:
-        # Fallback
         match = re.search(r'Κατανάλωση Ηλεκτρικής Ενέργειας\s+([\d\.,]+)\s*kWh', processed_text, re.IGNORECASE)
         if match: total_kwh = clean_number(match.group(1))
 
@@ -285,7 +284,6 @@ def parse_dei_pdf(file_bytes):
                     total_tier_cost += k * r
             except ValueError: pass
 
-    # Αν η τιμολογημένη ενέργεια είναι 0 (πλήρης κάλυψη Φ/Β), βάζουμε μια μέση εκτιμώμενη τιμή
     exact_avg_rate = total_tier_cost / billed_kwh if billed_kwh > 0 else 0.139
     
     # --- 3. ΣΥΝΟΛΙΚΟ ΠΟΣΟ ΛΟΓΑΡΙΑΣΜΟΥ ---
@@ -296,13 +294,15 @@ def parse_dei_pdf(file_bytes):
             total_bill = clean_number(match.group(1))
             break
 
-    # --- 4. ΡΥΘΜΙΖΟΜΕΝΕΣ & ΠΑΓΙΕΣ (Ανάκτηση όλων των χρεώσεων) ---
+    # --- 4. ΡΥΘΜΙΖΟΜΕΝΕΣ & ΠΑΓΙΕΣ ---
     all_charges = {}
+    
+    # Βελτιωμένα patterns για να "πιάνουν" και λέξεις κολλημένες με άνω τελεία
     patterns = [
         (r'Πάγια\s+Χρέωση[^\d\n]{0,20}([\d\.,]+)', "Πάγια Χρέωση"),
-        (r'ΑΔΜΗΕ[^\d\n]{0,50}([\d\.,]+)', "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
-        (r'ΔΕΔΔΗΕ[^\d\n]{0,50}([\d\.,]+)', "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
-        (r'ΥΚΩ[^\d\n]{0,50}([\d\.,]+)', "ΥΚΩ"),
+        (r'ΑΔΜΗΕ[^\d\n]{0,50}?([\d\.,]+)', "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
+        (r'ΔΕΔΔΗΕ[^\d\n]{0,50}?([\d\.,]+)', "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
+        (r'ΥΚΩ[^\d\n]{0,50}?([\d\.,]+)', "ΥΚΩ"),
         (r'ΕΤΜΕΑΡ[^\d\n]{0,20}([\d\.,]+)', "ΕΤΜΕΑΡ"),
         (r'Χρέωση\s+Χρήσης\s+Συστήματος[^\d\n]{0,20}([\d\.,]+)', "Χρέωση Χρήσης Συστήματος"),
         (r'Χρέωση\s+Χρήσης\s+Δικτύου[^\d\n]{0,20}([\d\.,]+)', "Χρέωση Χρήσης Δικτύου"),
@@ -310,10 +310,12 @@ def parse_dei_pdf(file_bytes):
         (r'ΕΔΑΠ[^\d\n]{0,20}([\d\.,]+)', "ΕΔΑΠ"),
         (r'Τέλος\s+ΑΠΕ[^\d\n]{0,20}([\d\.,]+)', "Τέλος ΑΠΕ"),
         (r'Τέλος\s+Ανακύκλωσης[^\d\n]{0,20}([\d\.,]+)', "Τέλος Ανακύκλωσης"),
-        (r'ΕΡΤ\b[^\d\n]{0,30}([\d\.,]+)', "ΕΡΤ"),
+        (r'ΕΡΤ[^\d\n]{0,30}?([\d\.,]+)', "ΕΡΤ"),
     ]
+    
     for pattern, key in patterns:
-        match = re.search(pattern, processed_text, re.IGNORECASE)
+        # Χρησιμοποιούμε MULTILINE για να ψάξει καλύτερα
+        match = re.search(pattern, processed_text, re.IGNORECASE | re.MULTILINE)
         if match:
             try:
                 val = clean_number(match.group(1))
@@ -332,6 +334,10 @@ def parse_dei_pdf(file_bytes):
     match_vat = re.search(r'ΦΠΑ\s+ΡΕΥΜΑΤΟΣ[^\d\n]*([\d\.,]+)\s*[xX×]\s*6%\s*(?:=)?\s*([\d\.,]+)', processed_text, re.IGNORECASE)
     if match_vat:
         vat_amount = clean_number(match_vat.group(2))
+    elif "ΦΠΑ" not in all_charges:
+        # Fallback ΦΠΑ
+        m_vat2 = re.search(r'ΦΠΑ[^\d\n]{0,20}([\d\.,]+)', processed_text, re.IGNORECASE)
+        if m_vat2: vat_amount = clean_number(m_vat2.group(1))
 
     # --- 7. ΠΙΝΑΚΑΣ "ΔΗΜΟΣ" (ΔΤ, ΔΦ, ΤΑΠ) ---
     match_dt = re.search(r'ΔΤ:[^\d\n]*?([\d\.,]+)(?:\s|$)', processed_text)
@@ -460,22 +466,26 @@ if uploaded_file is not None:
                             </div>
                             <div class="list-item-amount text-orange">{billed_energy_value:.2f} €</div>
                         </div>
-                        """, unsafe_allow_html=True) # ΕΔΩ ΠΡΟΣΤΕΘΗΚΕ Η ΕΝΤΟΛΗ
+                        """, unsafe_allow_html=True)
 
                     with col_right:
                         st.markdown('<div class="section-title">🔴 Σταθερές & Ρυθμιζόμενες Χρεώσεις</div>', unsafe_allow_html=True)
                         standard_html = ""
-                        for charge_name, amount in all_charges.items():
-                            info = CHARGE_INFO.get(charge_name, {"emoji": "📋", "desc": ""})
-                            standard_html += f"""
-                            <div class="list-item">
-                                <div class="list-item-left">
-                                    <div class="list-item-title">{info['emoji']} {charge_name}</div>
-                                    <div class="list-item-desc">{info['desc']}</div>
+                        
+                        if not all_charges:
+                            standard_html = "<div style='color:#94A3B8; font-size:0.9rem;'>Δεν εντοπίστηκαν ρυθμιζόμενες χρεώσεις ή φόροι.</div>"
+                        else:
+                            for charge_name, amount in all_charges.items():
+                                info = CHARGE_INFO.get(charge_name, {"emoji": "📋", "desc": ""})
+                                standard_html += f"""
+                                <div class="list-item">
+                                    <div class="list-item-left">
+                                        <div class="list-item-title">{info['emoji']} {charge_name}</div>
+                                        <div class="list-item-desc">{info['desc']}</div>
+                                    </div>
+                                    <div class="list-item-amount text-normal">{amount:.2f} €</div>
                                 </div>
-                                <div class="list-item-amount text-normal">{amount:.2f} €</div>
-                            </div>
-                            """
+                                """
                         st.markdown(standard_html, unsafe_allow_html=True)
 
                     # --- MATH VERIFICATION (Clean Box style) ---
@@ -520,6 +530,8 @@ if uploaded_file is not None:
                     
                     if math_html:
                         st.markdown(math_html, unsafe_allow_html=True)
+                    else:
+                        st.info("Δεν εντοπίστηκαν ρυθμιζόμενες χρεώσεις για ανάλυση.")
 
         except Exception as e:
             st.error(f"Σφάλμα κατά την ανάλυση: {e}")
@@ -528,7 +540,7 @@ if uploaded_file is not None:
 st.markdown("---")
 st.markdown("""
 <div style='text-align:center; padding: 2rem 0; color: #64748B;'>
-  <div style='font-size:0.9rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;'>Αναπτύχθηκε απο την</div>
+  <div style='font-size:0.9rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;'>Αναπτυχθηκε απο την</div>
   <div style='font-size:1.4rem; font-weight:800; color:#FFFFFF; letter-spacing: -0.5px;'>Zarkolia Health</div>
   <div style='font-size:0.9rem; margin-top: 4px;'>Πάνος Ζαρογουλίδης • Φαρμακοποιός MSc, MBA, Διαμεσολαβητής</div>
 </div>
