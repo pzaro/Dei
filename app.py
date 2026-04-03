@@ -1,7 +1,6 @@
 import streamlit as st
 import fitz  # PyMuPDF
 import re
-import plotly.graph_objects as go
 
 # ─────────────────────────────────────────────────────────────────
 # ΣΕΛΙΔΑ & ΣΤΥΛ
@@ -188,43 +187,43 @@ CHARGE_INFO = {
         "desc": (
             "Ειδικός Φόρος Μείωσης Εκπομπών Αερίων Ρύπων. "
             "Ανακατευθύνεται στο Ειδικό Λογαριασμό ΑΠΕ (ΕΛΑΠΕ) για την επιδότηση "
-            "των ανανεώσιμων πηγών ενέργειας (αιολικά, φωτοβολταϊκά κλπ.)."
+            "των ανανεώσιμων πηγών ενέργειας. "
+            "⚠️ Χρεώνεται επί της ΣΥΝΟΛΙΚΗΣ κατανάλωσης μετρητή — δεν μειώνεται από το net metering."
         ),
-        "formula": "kWh × 0,02972 €/kWh (τιμή 2024)",
-        "affected_by_pv": True,
+        "formula": "ΣΥΝΟΛΙΚΑ kWh μετρητή × 0,02972 €/kWh",
+        "affected_by_pv": False,
     },
     "ΥΚΩ": {
         "category": "🏝️ Υπηρεσίες Κοινής Ωφέλειας",
         "emoji": "🏝️",
         "desc": (
             "Χρέωση Υπηρεσιών Κοινής Ωφέλειας. Καλύπτει το κόστος "
-            "ηλεκτροδότησης νησιών και απομακρυσμένων περιοχών όπου "
-            "το κόστος παραγωγής είναι υψηλότερο."
+            "ηλεκτροδότησης νησιών και απομακρυσμένων περιοχών. "
+            "⚠️ Χρεώνεται επί της ΣΥΝΟΛΙΚΗΣ κατανάλωσης μετρητή — δεν μειώνεται από το net metering."
         ),
-        "formula": "kWh × ρυθμιζόμενη τιμή €/kWh",
-        "affected_by_pv": True,
+        "formula": "ΣΥΝΟΛΙΚΑ kWh μετρητή × ρυθμιζόμενη τιμή €/kWh",
+        "affected_by_pv": False,
     },
     "Χρέωση Χρήσης Συστήματος": {
         "category": "🔌 Χρεώσεις Δικτύου (ΑΔΜΗΕ / ΔΕΔΔΗΕ)",
         "emoji": "🔌",
         "desc": (
             "Κόστος χρήσης του Συστήματος Μεταφοράς Υψηλής Τάσης (ΑΔΜΗΕ). "
-            "Πληρώνεται για τη μεταφορά ηλεκτρισμού από τα εργοστάσια "
-            "παραγωγής στο δίκτυο διανομής."
+            "⚠️ Χρεώνεται επί της ΣΥΝΟΛΙΚΗΣ κατανάλωσης μετρητή — δεν μειώνεται από το net metering."
         ),
-        "formula": "kWh × τιμή €/kWh (ρυθμιζόμενη από ΡΑΕ)",
-        "affected_by_pv": True,
+        "formula": "ΣΥΝΟΛΙΚΑ kWh μετρητή × τιμή €/kWh (ρυθμιζόμενη από ΡΑΕ)",
+        "affected_by_pv": False,
     },
     "Χρέωση Χρήσης Δικτύου": {
         "category": "🔌 Χρεώσεις Δικτύου (ΑΔΜΗΕ / ΔΕΔΔΗΕ)",
         "emoji": "🔌",
         "desc": (
             "Κόστος χρήσης του Δικτύου Διανομής Χαμηλής/Μέσης Τάσης (ΔΕΔΔΗΕ). "
-            "Καλύπτει τη συντήρηση των γραμμών, μετασχηματιστών και "
-            "λοιπής υποδομής."
+            "Καλύπτει τη συντήρηση των γραμμών, μετασχηματιστών και λοιπής υποδομής. "
+            "⚠️ Χρεώνεται επί της ΣΥΝΟΛΙΚΗΣ κατανάλωσης μετρητή — δεν μειώνεται από το net metering."
         ),
-        "formula": "kWh × τιμή €/kWh (ρυθμιζόμενη από ΡΑΕ)",
-        "affected_by_pv": True,
+        "formula": "ΣΥΝΟΛΙΚΑ kWh μετρητή × τιμή €/kWh (ρυθμιζόμενη από ΡΑΕ)",
+        "affected_by_pv": False,
     },
     "Χρέωση Μέτρησης": {
         "category": "🔌 Χρεώσεις Δικτύου (ΑΔΜΗΕ / ΔΕΔΔΗΕ)",
@@ -266,40 +265,43 @@ CHARGE_INFO = {
         "category": "🧾 Φόροι",
         "emoji": "🧾",
         "desc": (
-            "Φόρος Προστιθέμενης Αξίας 6% επί όλων των χρεώσεων ενέργειας "
-            "και δικτύου. Ο μειωμένος συντελεστής 6% (αντί 24%) "
-            "ισχύει για την ηλεκτρική ενέργεια ως βασικό αγαθό."
+            "Φόρος Προστιθέμενης Αξίας 6% επί όλων των χρεώσεων. "
+            "✅ Το τμήμα ΦΠΑ που αντιστοιχεί στη χρέωση ενέργειας (Προμήθεια) "
+            "μειώνεται μέσω net metering. Το ΦΠΑ των υπόλοιπων χρεώσεων παραμένει σταθερό."
         ),
         "formula": "6% × (σύνολο χρεώσεων πριν ΦΠΑ)",
-        "affected_by_pv": True,
+        "affected_by_pv": True,  # μερικώς — μόνο το ΦΠΑ της ενέργειας
     },
     "ΕΦΚ": {
         "category": "🧾 Φόροι",
         "emoji": "🧾",
         "desc": (
-            "Ειδικός Φόρος Κατανάλωσης. Εισπράττεται υπέρ του Ελληνικού "
-            "Δημοσίου επί της ηλεκτρικής ενέργειας. "
-            "Υπολογίζεται ανά kWh κατανάλωσης."
+            "Ειδικός Φόρος Κατανάλωσης. Εισπράττεται υπέρ του Ελληνικού Δημοσίου. "
+            "⚠️ Χρεώνεται επί της ΣΥΝΟΛΙΚΗΣ κατανάλωσης μετρητή — δεν μειώνεται από το net metering."
         ),
-        "formula": "kWh × 0,00275 €/kWh",
-        "affected_by_pv": True,
+        "formula": "ΣΥΝΟΛΙΚΑ kWh μετρητή × 0,00275 €/kWh",
+        "affected_by_pv": False,
     },
     "Τέλος ΑΠΕ": {
         "category": "🌱 Ειδικοί Φόροι & Ανανεώσιμες Πηγές",
         "emoji": "🌱",
-        "desc": "Τέλος υπέρ Ανανεώσιμων Πηγών Ενέργειας — αποδίδεται στο ΕΛΑΠΕ.",
-        "formula": "kWh × ρυθμιζόμενη τιμή",
-        "affected_by_pv": True,
+        "desc": (
+            "Τέλος υπέρ Ανανεώσιμων Πηγών Ενέργειας — αποδίδεται στο ΕΛΑΠΕ. "
+            "⚠️ Χρεώνεται επί της ΣΥΝΟΛΙΚΗΣ κατανάλωσης μετρητή — δεν μειώνεται από το net metering."
+        ),
+        "formula": "ΣΥΝΟΛΙΚΑ kWh μετρητή × ρυθμιζόμενη τιμή",
+        "affected_by_pv": False,
     },
     "ΕΔΑΠ": {
         "category": "🌱 Ειδικοί Φόροι & Ανανεώσιμες Πηγές",
         "emoji": "🌱",
         "desc": (
             "Ειδική Διαχειριστική Αμοιβή Παραγωγής. Χρέωση υπέρ "
-            "του Λειτουργού της Αγοράς Ηλεκτρικής Ενέργειας (ΛΑΓΗΕ)."
+            "του Λειτουργού της Αγοράς Ηλεκτρικής Ενέργειας (ΛΑΓΗΕ). "
+            "⚠️ Χρεώνεται επί της ΣΥΝΟΛΙΚΗΣ κατανάλωσης μετρητή — δεν μειώνεται από το net metering."
         ),
-        "formula": "kWh × τιμή €/kWh",
-        "affected_by_pv": True,
+        "formula": "ΣΥΝΟΛΙΚΑ kWh μετρητή × τιμή €/kWh",
+        "affected_by_pv": False,
     },
     "Λοιπές Χρεώσεις": {
         "category": "📋 Πάγιες Χρεώσεις",
@@ -538,17 +540,19 @@ if uploaded_file is not None:
                     # ── LEGEND ────────────────────────────────────────────────
                     st.markdown("""
 <div class="legend-box">
-    <h4>📌 Οδηγός Ανάγνωσης</h4>
+    <h4>📌 Τι μειώνει το Net Metering στον λογαριασμό σας</h4>
     <div class="legend-row">
         <div class="dot-green"></div>
-        <span><b style="color:#4CAF50">Πράσινα νούμερα</b> = Τι <u>πραγματικά πληρώσατε</u> (με φωτοβολταϊκό)</span>
+        <span><b style="color:#4CAF50">Χρέωση Προμήθειας (€/kWh)</b> — μειώνεται κατά τις kWh που κάλυψε το Φ/Β</span>
     </div>
     <div class="legend-row">
-        <div class="dot-red"></div>
-        <span><b style="color:#F44336">Κόκκινα νούμερα</b> = Τι <u>θα πληρώνατε χωρίς</u> φωτοβολταϊκό</span>
+        <div class="dot-green"></div>
+        <span><b style="color:#4CAF50">ΦΠΑ 6%</b> επί της Προμήθειας — μειώνεται αναλογικά</span>
     </div>
-    <div class="legend-row" style="margin-top:8px; font-size:0.85rem; color:#999;">
-        ℹ️ Η διαφορά μεταξύ πράσινων και κόκκινων = το κέρδος σας από το net metering
+    <div class="legend-row" style="margin-top:6px;">
+        <div class="dot-red"></div>
+        <span><b style="color:#F44336">Όλες οι υπόλοιπες χρεώσεις</b> (ΕΤΜΕΑΡ, ΥΚΩ, Δίκτυο, ΕΦΚ, Πάγιες κλπ.)
+        χρεώνονται επί της <u>συνολικής κατανάλωσης μετρητή</u> — το Φ/Β ΔΕΝ τις μειώνει.</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -570,33 +574,39 @@ if uploaded_file is not None:
                     if total_bill is not None and total_bill < 0:
                         st.info(f"ℹ️ Ο λογαριασμός σας είναι **πιστωτικός** ({total_bill:.2f} €) — η ΔΕΗ σάς επιστρέφει χρήματα!")
 
-                    # ── ΣΥΓΚΡΙΤΙΚΟΣ ΠΙΝΑΚΑΣ ───────────────────────────────────
                     st.markdown("### 📊 Σύγκριση Τιμολόγησης")
                     st.markdown(
-                        "Τα **πράσινα** είναι τι πληρώσατε · τα <span style='color:#F44336'>κόκκινα στην παρένθεση</span> "
-                        "τι θα πληρώνατε χωρίς φωτοβολταϊκό.",
-                        unsafe_allow_html=True
+                        "Τα **🟢 πράσινα** είναι τι πληρώσατε (με Φ/Β) · τα **🔴 κόκκινα** τι θα πληρώνατε χωρίς Φ/Β. "
+                        "Μόνο η Προμήθεια + ΦΠΑ της αλλάζουν.",
+                        unsafe_allow_html=False
                     )
 
                     comparison_html = f"""
 <div style="background:#111827; padding:20px; border-radius:16px; border:1px solid #2d2d2d; margin-bottom:25px;">
   <table style="width:100%; border-collapse:collapse; font-family:'DM Sans',sans-serif;">
     <tr style="border-bottom:1px solid #2d2d2d;">
-      <td style="padding:12px 0; color:#ccc;">⚡ <b>Κατανάλωση (kWh)</b></td>
+      <td style="padding:12px 0; color:#ccc;">⚡ <b>Τιμολογημένες kWh (net)</b></td>
       <td style="text-align:right; padding:12px 0;">
-        <span style="color:#4CAF50; font-weight:700; font-size:1.2em;">{billed_kwh:.0f}</span>
-        <span style="color:#F44336; margin-left:10px; font-size:0.95em;">({total_kwh:.0f})</span>
+        <span style="color:#4CAF50; font-weight:700; font-size:1.2em;">{billed_kwh:.0f} kWh</span>
+        <span style="color:#F44336; margin-left:10px; font-size:0.95em;">({total_kwh:.0f} kWh χωρίς Φ/Β)</span>
       </td>
     </tr>
     <tr style="border-bottom:1px solid #2d2d2d;">
-      <td style="padding:12px 0; color:#ccc;">💶 <b>Αξία Καθαρής Ενέργειας</b></td>
+      <td style="padding:12px 0; color:#ccc;">💶 <b>Χρέωση Προμήθειας ΔΕΗ</b> <span style="font-size:0.8em; color:#4CAF50;">✅ μειώνεται</span></td>
       <td style="text-align:right; padding:12px 0;">
         <span style="color:#4CAF50; font-weight:700; font-size:1.2em;">{safe_energy_charge:.2f} €</span>
         <span style="color:#F44336; margin-left:10px; font-size:0.95em;">({hypo_energy_charge:.2f} €)</span>
       </td>
     </tr>
+    <tr style="border-bottom:1px solid #2d2d2d;">
+      <td style="padding:12px 0; color:#ccc;">🛡️ <b>ΕΤΜΕΑΡ / ΥΚΩ / Δίκτυο / Πάγιες</b> <span style="font-size:0.8em; color:#F44336;">⚠️ σταθερές</span></td>
+      <td style="text-align:right; padding:12px 0;">
+        <span style="color:#aaa; font-weight:600; font-size:1.1em;">{(actual_paid - safe_energy_charge - (actual_paid - safe_energy_charge - actual_other_charges)):.2f} €</span>
+        <span style="color:#aaa; margin-left:10px; font-size:0.9em;">(ίδιο και χωρίς Φ/Β)</span>
+      </td>
+    </tr>
     <tr style="border-bottom:2px solid #3d3d3d;">
-      <td style="padding:12px 0; color:#ccc;">🛡️ <b>Φόροι &amp; Λοιπά (incl. ΦΠΑ οφέλους)</b></td>
+      <td style="padding:12px 0; color:#ccc;">🧾 <b>ΦΠΑ 6%</b> <span style="font-size:0.8em; color:#4CAF50;">✅ μερικά μειώνεται</span></td>
       <td style="text-align:right; padding:12px 0;">
         <span style="color:#4CAF50; font-weight:700; font-size:1.2em;">{actual_other_charges:.2f} €</span>
         <span style="color:#F44336; margin-left:10px; font-size:0.95em;">({hypo_other_charges:.2f} €)</span>
@@ -614,60 +624,43 @@ if uploaded_file is not None:
 """
                     st.markdown(comparison_html, unsafe_allow_html=True)
 
-                    # ── BAR CHART ΚΑΤΑΝΟΜΗ ΧΡΕΩΣΕΩΝ ──────────────────────────
-                    st.markdown("### 📈 Κατανομή Χρεώσεων (Bar Chart)")
+                    # ── BAR CHART ΚΑΤΑΝΟΜΗ ΧΡΕΩΣΕΩΝ (native HTML) ───────────
+                    st.markdown("### 📈 Κατανομή Χρεώσεων")
+                    st.markdown(
+                        "🟢 Πράσινο = μειώνεται από net metering &nbsp;|&nbsp; "
+                        "🔴 Κόκκινο = χρεώνεται κανονικά (πλήρης κατανάλωση)",
+                        unsafe_allow_html=True
+                    )
 
                     if all_charges:
-                        # Ταξινόμηση κατά ύψος
                         sorted_charges = sorted(all_charges.items(), key=lambda x: x[1], reverse=True)
-                        labels = [item[0] for item in sorted_charges]
-                        values = [item[1] for item in sorted_charges]
+                        max_val = max(v for _, v in sorted_charges) if sorted_charges else 1
 
-                        # Χρώμα: πράσινο αν επηρεάζεται από Φ/Β, μπλε αλλιώς
-                        colors = []
-                        for lbl in labels:
-                            info = CHARGE_INFO.get(lbl, {})
-                            if info.get("affected_by_pv", True):
-                                colors.append("#4CAF50")
-                            else:
-                                colors.append("#5C8DFF")
+                        bars_html = ""
+                        for name, val in sorted_charges:
+                            info = CHARGE_INFO.get(name, {})
+                            is_pv = info.get("affected_by_pv", False)
+                            color = "#4CAF50" if is_pv else "#F44336"
+                            bg_color = "#1a3a1a" if is_pv else "#2a1a1a"
+                            pct = (val / max_val) * 100
+                            bars_html += f"""
+<div style="margin:8px 0;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+    <span style="font-size:0.9rem; color:#ddd; flex:1;">{name}</span>
+    <span style="font-family:'DM Mono',monospace; font-size:0.9rem; color:{color}; font-weight:600; margin-left:12px;">{val:.2f} €</span>
+  </div>
+  <div style="background:#1e1e1e; border-radius:6px; height:22px; overflow:hidden;">
+    <div style="width:{pct:.1f}%; background:{color}; height:100%; border-radius:6px;
+                display:flex; align-items:center; padding-left:8px; min-width:4px;
+                transition:width 0.5s ease; background: linear-gradient(90deg, {color}cc, {color});"></div>
+  </div>
+</div>"""
 
-                        fig = go.Figure(go.Bar(
-                            x=values,
-                            y=labels,
-                            orientation='h',
-                            marker=dict(color=colors, line=dict(color='rgba(0,0,0,0)', width=0)),
-                            text=[f"{v:.2f} €" for v in values],
-                            textposition='outside',
-                            textfont=dict(color='white', size=12),
-                        ))
-                        fig.update_layout(
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            plot_bgcolor='#111827',
-                            font=dict(family='DM Sans', color='white', size=13),
-                            xaxis=dict(
-                                title='Ποσό (€)',
-                                gridcolor='#2d2d2d',
-                                tickfont=dict(color='#aaa'),
-                            ),
-                            yaxis=dict(
-                                tickfont=dict(color='#ddd'),
-                                autorange='reversed',
-                            ),
-                            margin=dict(l=10, r=80, t=20, b=40),
-                            height=max(300, len(labels) * 52),
-                            showlegend=False,
+                        st.markdown(
+                            f'<div style="background:#111827; padding:20px; border-radius:14px; '
+                            f'border:1px solid #2d2d2d;">{bars_html}</div>',
+                            unsafe_allow_html=True
                         )
-                        # Χρωματικό legend
-                        fig.add_annotation(
-                            x=max(values) * 0.98, y=len(labels) - 0.5,
-                            text="🟢 Μειώνεται με Φ/Β  🔵 Σταθερή χρέωση",
-                            showarrow=False,
-                            font=dict(size=11, color="#aaa"),
-                            xanchor='right',
-                        )
-
-                        st.plotly_chart(fig, use_container_width=True)
                     else:
                         st.info("Δεν εντοπίστηκαν αναλυτικές χρεώσεις για γράφημα.")
 
@@ -699,20 +692,26 @@ if uploaded_file is not None:
                         for charge_name, amount, info in items:
                             pv_badge = (
                                 '<span style="background:#1a3a1a;color:#4CAF50;border-radius:6px;'
-                                'padding:2px 8px;font-size:0.78rem;margin-left:8px;">✅ Μειώνεται με Φ/Β</span>'
+                                'padding:2px 8px;font-size:0.78rem;margin-left:8px;">✅ Μειώνεται με net metering</span>'
                                 if info["affected_by_pv"] else
-                                '<span style="background:#1a1a3a;color:#5C8DFF;border-radius:6px;'
-                                'padding:2px 8px;font-size:0.78rem;margin-left:8px;">🔵 Σταθερή</span>'
+                                '<span style="background:#2a1a1a;color:#F44336;border-radius:6px;'
+                                'padding:2px 8px;font-size:0.78rem;margin-left:8px;">⚠️ ΔΕΝ μειώνεται — χρεώνεται κανονικά</span>'
                             )
 
-                            # Υπολογισμός οφέλους για αυτή τη χρέωση αν επηρεάζεται
+                            # Εξοικονόμηση ΜΟΝΟ για χρέωση Προμήθειας
                             benefit_note = ""
-                            if info["affected_by_pv"] and total_kwh and billed_kwh:
-                                ratio = hidden_kwh / total_kwh if total_kwh > 0 else 0
-                                estimated_saving = amount * ratio
+                            if charge_name == "Χρεώσεις Προμήθειας" and hidden_kwh and avg_rate_no_vat:
                                 benefit_note = (
                                     f'<div style="margin-top:6px;font-size:0.85rem;color:#4CAF50;">'
-                                    f'💡 Εκτιμώμενη εξοικονόμηση: ~{estimated_saving:.2f} €'
+                                    f'💡 Εξοικονόμηση από net metering: {saved_energy:.2f} € '
+                                    f'({hidden_kwh:.0f} kWh × {avg_rate_no_vat:.4f} €/kWh)'
+                                    f'</div>'
+                                )
+                            elif charge_name == "ΦΠΑ":
+                                benefit_note = (
+                                    f'<div style="margin-top:6px;font-size:0.85rem;color:#4CAF50;">'
+                                    f'💡 Εξοικονόμηση ΦΠΑ από net metering: {saved_vat:.2f} € '
+                                    f'(6% × {saved_energy:.2f} €)'
                                     f'</div>'
                                 )
 
