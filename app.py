@@ -270,7 +270,7 @@ def parse_dei_pdf(file_bytes):
         match = re.search(r'Κατανάλωση Ηλεκτρικής Ενέργειας\s+([\d\.,]+)\s*kWh', processed_text, re.IGNORECASE)
         if match: total_kwh = clean_number(match.group(1))
 
-    # --- 2. ΧΡΕΩΣΕΙΣ ΠΡΟΜΗΘΕΙΑΣ (Τιμολογηθείσα Ενέργεια) ---
+    # --- 2. ΧΡΕΩΣΕΙΣ ΠΡΟΜΗΘΕΙΑΣ (Τιμολογηθείσα Ενέργεια - Regex) ---
     billed_kwh = 0.0
     total_tier_cost = 0.0
     
@@ -297,9 +297,9 @@ def parse_dei_pdf(file_bytes):
     # --- 4. ΡΥΘΜΙΖΟΜΕΝΕΣ & ΠΑΓΙΕΣ ---
     all_charges = {}
     
-    # Βελτιωμένα patterns για να "πιάνουν" και λέξεις κολλημένες με άνω τελεία
     patterns = [
-        (r'Πάγια\s+Χρέωση[^\d\n]{0,20}([\d\.,]+)', "Πάγια Χρέωση"),
+        (r'Χρεώσεις\s+Προμήθειας\s+ΔΕΗ[^\d\n]{0,20}?([\d\.,]+)', "Χρεώσεις Προμήθειας"),
+        (r'Πάγια\s+Χρέωση[^\d\n]{0,20}?([\d\.,]+)', "Πάγια Χρέωση"),
         (r'ΑΔΜΗΕ[^\d\n]{0,50}?([\d\.,]+)', "ΑΔΜΗΕ: Σύστημα Μεταφοράς"),
         (r'ΔΕΔΔΗΕ[^\d\n]{0,50}?([\d\.,]+)', "ΔΕΔΔΗΕ: Δίκτυο Διανομής"),
         (r'ΥΚΩ[^\d\n]{0,50}?([\d\.,]+)', "ΥΚΩ"),
@@ -314,13 +314,21 @@ def parse_dei_pdf(file_bytes):
     ]
     
     for pattern, key in patterns:
-        # Χρησιμοποιούμε MULTILINE για να ψάξει καλύτερα
         match = re.search(pattern, processed_text, re.IGNORECASE | re.MULTILINE)
         if match:
             try:
                 val = clean_number(match.group(1))
                 if val > 0: all_charges[key] = val
             except ValueError: pass
+
+    # *ΔΙΟΡΘΩΣΗ ΓΙΑ ΤΙΜΟΛΟΓΗΘΕΙΣΑ ΕΝΕΡΓΕΙΑ:*
+    # Αν το regex δεν βρήκε τις αναλυτικές kWh αλλά το τιμολόγιο έχει χρέωση, το υπολογίζουμε αντίστροφα!
+    if billed_kwh == 0 and "Χρεώσεις Προμήθειας" in all_charges:
+        charge_promithias = all_charges["Χρεώσεις Προμήθειας"]
+        if charge_promithias > 0:
+            exact_avg_rate = 0.139 # Χρησιμοποιούμε μια μέση τιμή ασφαλείας
+            billed_kwh = round(charge_promithias / exact_avg_rate)
+
 
     # --- 5. ΠΙΝΑΚΑΣ "ΔΙΑΦΟΡΑ" (ΕΦΚ & ΕΙΔ. ΤΕΛ.) ---
     match_efk = re.search(r'ΕΦΚ\s*\(Ν\.3336/05\)[^\d\n]*([\d\.,]+)', processed_text, re.IGNORECASE)
@@ -335,7 +343,6 @@ def parse_dei_pdf(file_bytes):
     if match_vat:
         vat_amount = clean_number(match_vat.group(2))
     elif "ΦΠΑ" not in all_charges:
-        # Fallback ΦΠΑ
         m_vat2 = re.search(r'ΦΠΑ[^\d\n]{0,20}([\d\.,]+)', processed_text, re.IGNORECASE)
         if m_vat2: vat_amount = clean_number(m_vat2.group(1))
 
@@ -381,7 +388,7 @@ if uploaded_file is not None:
                     VAT_RATE = 0.06
                     
                     # Αξία της ενέργειας που τιμολογήθηκε
-                    billed_energy_value = billed_kwh * exact_avg_rate
+                    billed_energy_value = all_charges.get("Χρεώσεις Προμήθειας", 0.0)
                     billed_vat = billed_energy_value * VAT_RATE
                     
                     # Αξία της ενέργειας που ΔΕΝ τιμολογήθηκε (ΚΕΡΔΟΣ)
@@ -476,6 +483,8 @@ if uploaded_file is not None:
                             standard_html = "<div style='color:#94A3B8; font-size:0.9rem;'>Δεν εντοπίστηκαν ρυθμιζόμενες χρεώσεις ή φόροι.</div>"
                         else:
                             for charge_name, amount in all_charges.items():
+                                if charge_name == "Χρεώσεις Προμήθειας": continue
+                                
                                 info = CHARGE_INFO.get(charge_name, {"emoji": "📋", "desc": ""})
                                 standard_html += f"""
                                 <div class="list-item">
